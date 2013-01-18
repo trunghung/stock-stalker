@@ -1,0 +1,137 @@
+<html>
+  <head>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>View Stock</title>
+	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.2.0/build/cssreset/reset-min.css">
+	<script src="http://yui.yahooapis.com/3.2.0/build/yui/yui-debug.js"></script> 
+	<script src="./js/config.js"></script>
+	<script src="./js/data.js"></script>
+  </head>
+  <style>
+  #go {
+  	padding: 10px 20px;
+  }
+  </style>
+
+  <body>
+  	<div id="header" class="toolbar">
+	    <h1 id="pageTitle"></h1>
+	    <a id="backButton" class="button" href="#"></a>
+	    <a id="save_btn" class="button hidden">Save</a>
+	    <a id="edit_btn" class="button hidden">Edit</a>
+		<span id="refreshBtn" class="visible button refresh_quotes" title="Refresh quotes"><img class="toolbar_btn_icon" src="./res/sync.png"></span>
+	</div>	
+	<div id="home" title="Home" selected="true"><button id="go">Loading</button>
+	<div id="Output"></div>
+	</div>
+	<script>
+		var DEBUG_MODE = true;
+		window.g_demoOverwrite = true;
+		window.g_doNotUseSample = true;
+		window.g_serverMode = true;
+		var Y = new YUI(YUI_Config);
+		Y.use("PortfolioManager", function() {
+			var node = Y.one("#go");
+			node.setContent("Run Integration Tests"),
+			portMgr = Y.Stock.portMgr,
+			portocol = Y.Stock.Protocol;
+			
+			function clearPortfolio() {
+        		portocol.deletePortfolios();
+        	}
+        	function addPortfolio(name) {
+        		portMgr.addNewPortfolio(name);
+        	}
+        	function getPort(portname) {
+        		var cur, port, ports = portMgr.getPortfolios();
+        		for (cur in ports) {
+                    port = ports[cur];
+                    if (port.name == portname)
+                    	return port;
+        		}
+        		return {};
+        	}
+        	function getPortId(portName) {
+        		return getPort(portName).id;
+        	}
+        	function getPositionId(portName, symbol) {
+        		var index, port = getPort(portName), id;
+        		if (port.content) {
+        			for (index in port.content) {
+        				if (port.content[index].symbol == symbol) {
+        					id = port.content[index].id;
+        					break;
+        				}
+                    }
+        		}
+        		return id;
+        	}
+        	
+			var testCases=[function() { portocol.deletePortfolios(); },
+        	               function() { 
+			        	   		portocol.getPortfolios(); 
+			        			},
+        	               function() { portMgr.addNewPortfolio("port1"); },	
+        	               function() { portMgr.addNewPortfolio("port2"); },
+        	               function() { portMgr.addNewPortfolio("port3"); },
+        	               function() { 
+        	            	   	portMgr.renamePortfolio(getPortId("port3"), "port New 3 , / ? : @ & = + $ #"); 
+        	            	   	},
+        	               function() { 
+        	            		portMgr.removePortfolio(getPortId("port1")); 
+        	            		},	        	               
+        	               function() { 
+        	            	   	portMgr.addNewPosition(getPortId("port2"), "YHOO", 100, 10.10, "20110112", "note1"); 
+        	            	   	portMgr.addNewPosition(getPortId("port2"), "YHOO", 200, 10.10, "20110212", ", / ? : @ & = + $ #");
+        	            	   	portMgr.addNewPosition(getPortId("port2"), "AAPL", 200, 10.10); 
+        	            	   	portMgr.addNewPosition(getPortId("port2"), "MSFT", 100, 10.10, "20110112", "note1");
+        	            	   	},
+        	               function() {  
+        	            	   	},
+        	               function() { 
+        	            	   	},
+        	               function() {  
+        	            	   	},
+        	               function() { 
+        	            		//portMgr.editPosition(getPortId("port2"), getPositionId("port2", "MSFT"), 200, 20.10, "20110202", "note2"); 
+        	            		},
+        	               function() { 
+        	            	   	//portMgr.removePosition(getPortId("port2"), getPositionId("port2", "MSFT")); 
+        	            	   	},
+             	           function() { portMgr.editCashBalance(getPortId("port2"), 1000); },
+        	               function() { 
+        	            	   	portocol.getPortfolios(); 
+        	            		}
+        	               ],
+        	curTestCase = 0;
+			
+			node.on("click", function(){
+				var output = Y.one("#Output");
+				output.setContent("");
+				output.append("<li>Test running</li>");
+	        	curTestCase = 0;
+	        	
+	        	// Kick off the first one.  We will only execute the next one after the current one is done
+	        	//Y.one("#Output").append(["<li>Test case #", curTestCase, "starting </li>"].join(" "));
+	        	testCases[curTestCase++]();
+	        	Y.on("CmdResponse", function(data, action, invokedParams){
+	        		Y.one("#Output").append(["<li>Test case #", curTestCase - 1, "action:", action, "response:", JSON.stringify(data), "</li>"].join(" "));
+	        		if (curTestCase >= testCases.length) {
+	        			Y.one("#Output").append(["<li>Last test case finished. Final Portfolio Manager state:</li>"].join(""));
+	        			Y.one("#Output").append(JSON.stringify(portMgr.getPortfolios()));
+	    				output.append("<li>Test done</li>");
+	        			return;
+	        		}
+	        		else {
+	    	        	//Y.one("#Output").append(["<li>Test case #", curTestCase, "starting </li>" ].join(" "));
+	    	        	if (curTestCase === 8) {
+	    	        		curTestCase = curTestCase;
+	    	        	}
+	        			testCases[curTestCase++]();
+	        		}
+	        	});
+			});
+		});
+	</script>
+</body>

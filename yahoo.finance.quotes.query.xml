@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table xmlns="http://query.yahooapis.com/v1/schema/table.xsd">
+    <meta>
+        <author>
+            Thomas Fowler
+        </author>
+        <description>
+            Yahoo Finance Quotes - Options Chain
+        </description>
+        <sampleQuery>
+            SELECT * FROM {table} WHERE symbol='GOOG' AND expiration='2010-06'
+        </sampleQuery>
+    </meta>
+    <bindings>
+        <select itemPath="" produces="XML">
+           <urls><url>http://download.finance.yahoo.com/d/quotes.csv?s={-listjoin|,|symbol}</url></urls>
+            <inputs>
+            	<key id='f' type='xs:string' const='true' default='sl1c1abvhgopjkrej1n' paramType='query' />
+				<key id='symbol' type='xs:string' batchable='true' maxBatchItems='50' paramType='path' required='true'/>
+				<key id="option" type="xs:string" paramType="variable" required="true" />
+            </inputs>
+            <execute>
+                <![CDATA[
+			function parseNumFloat(num) {
+				num = num + "";
+				var str = num.replace( /^0+/, '' );
+	
+				// also the thousands comma was cousing trouble
+				str = str.replace( /\,/g, '' );
+				return parseFloat(str);
+			}
+			function getOptions()
+			{
+				var xml = new XML(optionsQuery),
+				i, table, name, symbol, lastTrade, change, changePercent, vol, 
+				day_lo, day_hi, optionElem;	
+				for each (i in xml.tr) {
+					if (i.td[2]) {
+						symbol = i.td[0].span.a;
+						lastTrade = parseNumFloat(i.td[2].span.span[1]);
+						change = parseNumFloat(i.td[3].span.span[1]);
+						changePercent = parseNumFloat(i.td[4].span.span[1]);
+						day_lo = parseNumFloat(i.td[5].span.span[1]);
+						day_hi = parseNumFloat(i.td[6].span.span[1]);
+						vol = parseNumFloat(i.td[7].span.span[1]);
+												
+						optionElem = <options symbol={symbol}></options>;
+						optionElem.appendChild(<price>{lastTrade}</price>);
+						optionElem.appendChild(<change>{change}</change>);
+						optionElem.appendChild(<percent-change>{changePercent}</percent-change>);
+						optionElem.appendChild(<day_lo>{day_lo}</day_lo>);
+						optionElem.appendChild(<day_hi>{day_hi}</day_hi>);
+						optionElem.appendChild(<vol>{vol}</vol>);
+					
+						quotes.appendChild( optionElem );
+						y.log([symbol, lastTrade, change, changePercent, "v:", vol, "lo:", day_lo, "hi:", day_hi].join(" "));
+					}
+					else {
+						//y.log("invalid symbol");
+					}
+				}
+			}
+					 
+					 
+			var quotes;
+
+			quotes = <quotes/>;
+			// Queue the query
+			var headers = "'symbol,price,change,ask,bid,vol,day_hi,day_lo,open,prev_close,year_lo,year_hi,pe,eps,mcap,name'"; 
+			var results = y.query("select * from csv where url=@url and columns=" + headers,{url:request.url}); 
+				
+			var rows=results.results.row;
+			for each (var row in rows) {
+				for each (var item in row.*) {
+					var elname = item.localName();
+					var txt = item.text().toString();
+					if (txt=="N/A") txt=""; else if (txt=="-") txt=""; else {
+						txt = txt.replace(/"/g, '');
+					}
+					row[elname]=txt;
+				}
+				//split % change out
+				var price = parseNumFloat(row["price"]), 
+				change = parseNumFloat(row["change"]);
+				row["percent-change"]= (change * 100 / (price - change)).toFixed(2);	
+			    quotes.stocks += <stocks >{row.*}</stocks>;
+				
+			}
+				
+			if (option.length > 0) {
+			try {
+				var optionsURL = "http://finance.yahoo.com/quotes/" + option + "/view/v1";
+
+				var yQuery = y.rest( optionsURL );	
+				var data = yQuery.accept( "text/html" ).get().response;			
+				var optionsQuery = y.xpath(
+							data, 
+							"//table[@class='yfi_portfolios_multiquote sortable yfi_table_row_order']/tbody"
+				);				
+				getOptions();
+			}				
+			catch(e) {
+			}	
+			}
+			response.object = quotes;
+					 
+		]]>
+            </execute>
+        </select>
+    </bindings>
+</table>

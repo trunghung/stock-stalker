@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<table xmlns="http://query.yahooapis.com/v1/schema/table.xsd">
+    <meta>
+        <author>
+            Thomas Fowler
+        </author>
+        <description>
+            Yahoo Finance Quotes - Options Chain
+        </description>
+        <sampleQuery>
+            SELECT * FROM {table} WHERE symbol='GOOG' AND expiration='2010-06'
+        </sampleQuery>
+    </meta>
+    <bindings>
+        <select itemPath="" produces="XML">
+           <urls><url></url></urls>
+            <inputs>
+				<key id='symbol' type='xs:string' batchable='true' maxBatchItems='50' paramType='path' required='true'/>
+            </inputs>
+            <execute>
+                <![CDATA[
+                	// BUGBUG                 	
+                	var backup = {};
+                	
+					function parseNumFloat(num) {
+						num = num + "";
+						var str = num.replace( /^0+/, '' );
+	
+						// also the thousands comma was cousing trouble
+						str = str.replace( /\,/g, '' );
+						return parseFloat(str);
+					}
+                	function getInfo(info, row, col) {
+                		return info.table.tr[row].td[col].span.toString()
+                	};
+                	function log(name, node) {
+                		y.log(name + " : --------------------");
+                		y.log(node ? node.toString() : "NULL node");
+                	}
+                	function extractName(node, content) {
+                		var classes =  node.@['class'];
+                		// extract the name, xchange, and symbols
+                		if(classes.match(/first/)){
+                			content.name = node.h2.toString();
+                			xchange = node.p.text().toString();
+                			xchange = xchange.substr(1, xchange.length - 4);
+                			content.xchange = xchange;
+                			content.symbol = node.p.a.toString();
+                		}
+                		return content.symbol;
+                	}
+                	function extractEquityInfo(node, content, isEquity) {
+                		var info = node.div[0].table.tbody, percentChange,
+                		classes = node.@['class'];
+                		// Regular equities have double column structure
+                		if (classes.match(/double/)) {
+                			content.type = "equity";                			
+                			
+                			// 0 - last trade, day range
+                			try {
+                				content.price = parseNumFloat(info.tr[0].td[0].span.toString());
+                				content.day_lo = info.tr[0].td[1].span[0].toString();
+                			} catch (err) {}
+                			
+                			// 1 - trade time, 52wk Range
+                			content.yrRange = info.tr[1].td[1].toString();
+                			// 2 - Change, Vol
+                			try {
+                				content.change = parseNumFloat(info.tr[2].td[0].span[0].span.toString());
+                				percentChange = info.tr[2].td[0].span[1].span.toString();
+                				percentChange = percentChange.substr(1, percentChange.length - 2);
+                				content["percent-change"] = percentChange;
+                				content.vol = parseNumFloat(info.tr[2].td[1].span.toString());
+                			} catch(err) {}
+
+                			// 3 - Prev close, avg vol
+                			content.prev_close = info.tr[3].td[0].toString();
+                			
+                			// 4 - open, MCap
+                			content.open = info.tr[4].td[0].toString();
+                			
+                			// 5 - bid, pe
+                			if (info.tr[5].td[0].span[0]) {
+                				content.bid = info.tr[5].td[0].span[0].toString();
+                				content.pe = info.tr[5].td[1].toString();
+                			}
+                			
+                			// problem line
+                			// 6 - ask, eps
+                			if (content.ask = info.tr[6].td[0].span && info.tr[6].td[0].span[0]) {
+                				content.ask = info.tr[6].td[0].span[0].toString();
+                				content.eps = info.tr[6].td[1].toString();
+                			}
+                			
+                			// 7 - 1YTargetEst, dividend
+                			if (info.tr[7].td[0])
+                				content["YrTarEst"] = info.tr[7].td[0].toString();
+                			
+                			if (!isEquity) {
+                				content.ytdRet = info.tr[4].td[1].span.toString();
+                			}
+                			else {
+                				content.MCap = info.tr[4].td[1].span.toString();
+                				content.pe = info.tr[5].td[1].toString();
+                				content.eps = info.tr[6].td[1].toString();
+                				content.dividend = info.tr[7].td[1].toString();
+                			}
+                		}
+                		
+                		// Extract real time price
+                		info = node.div[0].p[0];
+                		if (info && info.@['class'].match(/real-time/)) {
+                			content.price = parseNumFloat(info.span[0].toString());
+                			content.change = parseNumFloat(info.span[1].span.toString());
+                			percentChange = info.span[2].span.toString();
+                			percentChange = percentChange.substr(1, percentChange.length - 2);
+                			content["percent-change"] = percentChange;
+                		}
+                	}                	
+                	function extractIndexInfo(node, content) {
+                		var info = node.div[0].table.tbody, percentChange,
+                		classes = node.@['class'];
+                		// Indices have single column structure
+                		if (classes.match(/single/)) {
+                			content.type = "index";
+                			// 0 - price
+                			content.price = parseNumFloat(info.tr[0].td.span.toString());
+                			// 1 - trade time
+                			// 2 - change
+                			try {
+                				content.change = parseNumFloat(info.tr[2].td.span[0].span.toString());
+                				percentChange = info.tr[2].td.span[1].span.toString();
+                				percentChange = percentChange.substr(1, percentChange.length - 2);
+                				content["percent-change"] = percentChange;                			
+                			} catch(err) {}         			
+                			
+                			try {
+                				// 3 - prev_close
+                				content.prev_close = info.tr[3].td.toString();
+                				// 4 - open                			
+                				content.open = info.tr[4].td.toString();
+                			
+                				// 5 - day range
+                				content.day_lo = info.tr[5].td.span[0].toString();
+                				content.day_hi = info.tr[5].td.span[1].toString();
+                				
+                				// 6 - yrRange
+                				content.yrRange = info.tr[6].td.toString();
+                			} catch(err) {}
+                		}
+                	} 
+                	function extractOptionInfo(node, content, sym) {
+                		var info = node.div[0].table.tbody,
+                		classes = node.@['class'];
+                		// Options have single column structure
+                		if (classes.match(/single/)) {
+                			content.type = "option";
+                			// 0 - Trade time
+                			// 1 - open
+                			// BUGBUG: currently we use open price for price since it's not there
+                			if (backup[sym]) {
+                				content.price = backup[sym].price;
+                				content.change = backup[sym].change;
+                				content["percent-change"] = backup[sym].changePercent;
+                			}
+                			else {
+                				//content.price = parseNumFloat(info.tr[1].td.toString());
+                			}
+                			content.open = info.tr[1].td.toString();
+                			// 2 - prev_close
+                			content.prev_close = info.tr[2].td.toString();
+                			// 3 - day range
+                			content.day_lo = info.tr[3].td.span[0].toString();
+                			content.day_hi = info.tr[3].td.span[1].toString();
+                			// 4 - vol 
+                			content.vol = info.tr[4].td.span.toString();
+                			// 6 - strike
+                			content.strike = info.tr[6].td.toString();
+                			// 7 - Expire date
+                			content.expiration = info.tr[7].td.toString();
+                		}
+                	}
+                	function extractMutualFundInfo(node, content, sym) {
+                		var info = node.div[0].table.tbody, percentChange,
+                		classes = node.@['class'];
+                		// Indices have single column structure
+                		if (classes.match(/single/)) {
+                			// 0 - Prev close
+                			// BUGBUG: currently we use open price for price since it's not there
+                			if (backup[sym]) {
+                				content.price = backup[sym].price;
+                				content.change = backup[sym].change;
+                				content["percent-change"] = backup[sym].changePercent;
+                			}
+                			else {
+                				content.price = parseNumFloat(info.tr[0].td.toString());
+                			}
+                			content.prev_close = info.tr[0].td.toString();
+                			
+                			// 3 - YTD return
+                			content.ytdRet = info.tr[3].td.toString();
+                			
+                			// 4 - Yield ttm
+                			content.yield = info.tr[4].td.toString();
+                		}
+                	
+                	}
+                	var url = "http://finance.yahoo.com/quotes/" + symbol + "/view/dv";
+                	
+                	// Temporary info for option and mutual fund
+                	var urlDay = "http://finance.yahoo.com/quotes/" + symbol + "/view/v2",
+                	resDay = y.query('select * from html where url="' +
+                						urlDay + 
+                						'" and compat="html5" and xpath="//table[@class=\'yfi_portfolios_multiquote sortable yfi_table_row_order\']/tbody"').results.tbody;
+                	var i=0;
+                	for each (quote in resDay.tr) {
+                		backup[quote.td[0].span.a.toString()] = { price: quote.td[1].span.span.toString(),
+                				change: quote.td[2].span.span.toString(),
+                				changePercent: quote.td[3].span.span.toString()};
+                		
+                	}
+                	var res = y.query('select * from html where url="' +
+                						url + 
+                						'" and compat="html5" and xpath="//div[@id=\'yfi_summary_table_container\']/div"').results,
+                	content = {}, out = <quotes/>, header, body, info, classes,
+                	percentChange, xchange;
+                	
+                	for each(quote in res.div) {
+                		realTimeExtracted = false;
+                		header = quote.div[0];
+                		var sym;
+                		
+                		sym = extractName(header, content);
+                		
+                		var classes = quote.@['class'];
+                		var isEquity = classes.match(/type_equity/);
+                		
+                		try {
+                			if (isEquity || classes.match(/type_etf/)) {
+                				extractEquityInfo(quote.div[1], content, isEquity);  
+                			}
+                			else if (classes.match(/type_option/)) {
+                				extractOptionInfo(quote.div[1], content, sym);  
+                			}
+                			else if (classes.match(/type_index/)) {
+                				extractIndexInfo(quote.div[1], content); 
+                			}
+                			else if (classes.match(/type_mutualfund/)) {
+                				extractMutualFundInfo(quote.div[1], content, sym); 
+                			}
+                		} catch(err) {}
+                		                		    
+                		var a = y.jsonToXml(content);
+                		//a = content.toString();
+                		out.quotes += a;
+                		content = {};
+                	} 
+                	response.object = out; 
+		]]>
+            </execute>
+        </select>
+    </bindings>
+</table>

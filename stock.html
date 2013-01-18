@@ -1,0 +1,65 @@
+<html>
+  <head>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>View Stock</title>
+	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.2.0/build/cssreset/reset-min.css">
+	<script src="http://yui.yahooapis.com/3.2.0/build/yui/yui-debug.js"></script> 
+	<script src="./js/config.js"></script>
+	<script src="./js/data.js"></script>
+  </head>
+  <style>
+  #go {
+  	padding: 10px 20px;
+  }
+  </style>
+
+  <body>
+  	<div id="header" class="toolbar">
+	    <h1 id="pageTitle"></h1>
+	    <a id="backButton" class="button" href="#"></a>
+	    <a id="save_btn" class="button hidden">Save</a>
+	    <a id="edit_btn" class="button hidden">Edit</a>
+		<span id="refreshBtn" class="visible button refresh_quotes" title="Refresh quotes"><img class="toolbar_btn_icon" src="./res/sync.png"></span>
+	</div>	
+	<form id="editStock" class="dialog edit_stock">
+        <fieldset>
+            <h1 class="title new">New Position</h1>
+            <h1 class="title edit">Edit Position</h1>
+            <a class="button leftButton" type="cancel">Cancel</a>
+            <a class="button blueButton" >Done</a>  
+            <li><input type="text" placeholder="Symbol"></li>
+            <li><input type="text" placeholder="Number of Shares"> </li>
+            <li><input type="text" placeholder="Puchase Price"> </li>
+            <li><input type="text" placeholder="Purchase Date"> </li>
+            <li><input type="text" placeholder="Notes"></li>
+            <button class="delete redbutton edit">Close Position</button>
+        </fieldset>
+    </form>
+	<div id="home" title="Home" selected="true"><button id="go">Loading</button></div>
+	<script>
+		var DEBUG_MODE = true;
+		window.g_demoOverwrite = true;
+		var Y = new YUI(YUI_Config);
+		Y.use("view_stock", function() {
+			Y.one("#edit_btn").on("click", function(){
+				Y.fire("editClicked", "view_stock");
+			});
+		    Y.on('quotesInfoUpdated', function(){
+		    	Y.one("#go").setContent("View Stock");
+				Y.one("#go").on("click", function(){
+			    	var port = Y.Stock.portMgr.getPortfolio("pf_1"),
+			    	stock = port.content[0];
+			    	Y.Stock.view_stock.render(stock.symbol, port.id, stock.id);
+					//iui.showPageById("view_stock");
+				});
+		    	/*
+		   		Y.later(1000,  this, function() {
+	  		  	    iui.showPageById("view_stock");
+	  		  	}, false);
+		    	*/
+		    });
+		    Y.Stock.quoteMgr.updateAllQuotesFromAccounts();
+		});
+	</script>
+</body>

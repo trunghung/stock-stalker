@@ -1,0 +1,96 @@
+New portfolio, cash value and other are undefined
+New port, add a new stock, we need to implement fetchquote
+Position doesn't have either buy value
+
+TODO:
+*** Reduce start up dependency
+Clean up attached event to 
+Show there is no news/news downloading message
+put text shadow into all title
+viewstock can't handle unknown stock
+viewstock news can't handle ^ or mutal fund news
+viewNews while news is downloading show "loading"
+viewSstock maybe increase news item top and bottom padding
+viewStock doesn't show ^DJI name properly
+edit Portfolio: place holder is off center in chrome fix can be done by change .panel fieldset.input div.row input  padding: 9px 3px;
+viewPort: Port change while viewport isn't active
+group blocks together
+edit Port: when click back remove node?
+news: only download news headlines when we first load it
+edit Port: set focus into stock name when add a new one
+clean up tag2
+viewport: non0deffault view used, tab activated properly
+viewport: remove no_shares once position has shares
+all page: dynamically set min heigh to page so that it doesn't show the white background for page with small content like viewport
+portmgr: validate cache
+portmgr: cache position values
+app: if page is loading, don't go to that page again else app get into weird state (click on the same portfolio quickly from home page while loading)
+Show loading page while we load a new page
+IUI: Slide flickering only happen for long page.  maybe consider using viewport
+App: Use bottom nav toolar
+ViewPort: If view changes elsewhere, viewport may be outdated
+market value should be black not green
+
+use URL param from iui.js
+param: function( o )
+	{
+	  var s = [ ];
+	
+	  // Serialize the key/values
+	  for ( var key in o )
+		s[ s.length ] = encodeURIComponent(key) + '=' + encodeURIComponent(o[key]);
+  
+	  // Return the resulting serialization
+	  return s.join("&").replace(/%20/g, "+");
+	},
+
+Position view: -% show up as green
+
+News: have a page to render news in embed iframe so we don't need to leave
+
+
+color:
+default button: (blue) top:7B9EEA  2463DE
+
+
+Have 2 color themes, black, blue, silver
+
+http://ichart.finance.yahoo.com/table.csv?s=AAPL&c=1962
+
+
+http://ichart.finance.yahoo.com/instrument/1.0/YHOO/chart;range=1d/image;size=260x115
+http://ichart.finance.yahoo.com/instrument/1.0/%5EDJI/chart;range=5d/image;size=260x115
+http://ichart.finance.yahoo.com/instrument/1.0/%5Edji/chart;range=1y/image;size=260x115
+
+http://ichart.finance.yahoo.com/instrument/1.0/GOOG/chart;range=6m/image;size=239x110?lang=en-US&region=US
+
+Use large chart size if running on ipad screen.
+http://chart.finance.yahoo.com/c/3m/y/yhoo?lang=en-US&region=US
+
+1d: http://finance.yahoo.com/q/bc?s=YHOO&t=1d&l=on&z=m&q=l&c=
+5d: http://finance.yahoo.com/q/bc?s=YHOO&t=5d&l=on&z=m&q=l&c=
+3m: http://finance.yahoo.com/q/bc?s=YHOO&t=3m&l=on&z=m&q=l&c=
+6m: http://finance.yahoo.com/q/bc?s=YHOO&t=6m&l=on&z=m&q=l&c=
+1y: http://finance.yahoo.com/q/bc?s=YHOO&t=1y&l=on&z=m&q=l&c=
+
+
+Unit tests:
+Home: 
+Add port
+Remove port
+Edit Port: Name, cash, stock list
+
+View Portfolio:
+
+
+View Stock:
+
+
+News:
+
+
+
+
+
+----- Tips ------
+onclick for iphone and visual focus rect

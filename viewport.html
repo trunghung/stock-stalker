@@ -1,0 +1,41 @@
+<html>
+  <head>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>Portfolio</title>
+	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.2.0/build/cssreset/reset-min.css">
+	<script src="http://yui.yahooapis.com/3.2.0/build/yui/yui-debug.js"></script> 
+	<script src="./js/data.js"></script> 
+	<script src="./js/config.js"></script>
+	<script src="./js/debug.js"></script>
+  </head>
+
+  <body>	  	
+  	<div id="header" class="toolbar">
+	    <h1 id="pageTitle"></h1>
+	    <a id="backButton" class="button" href="#"></a>
+	    <a id="save_btn" class="button blueButton hidden">Save</a>
+	    <a id="edit_btn" class="button hidden">Edit</a>
+		<span id="refreshBtn" class="visible button refresh_quotes" title="Refresh quotes"><img class="toolbar_btn_icon" src="../res/sync.png"></span>
+	</div>
+	<div id="home" title="Home" selected="true"></div>
+	<div id="logconsole" class="hidden"><br><br><br>Log: <button class="toggle_log">Hide</button><br></div>
+  	<script>
+		var Y = new YUI(YUI_Config);
+		Y.namespace("Stock");
+		window.g_demoOverwrite = true;
+		Y.use("view_portfolio", function(Y) {
+    		var menu = new followAlong('searchForm');
+  		  	Y.on('quotesInfoUpdated',function(){
+  		  		Y.Stock.viewPort.render("pf_1");      		  	
+            });
+  		  	Y.one("#edit_btn").on("click", function(){
+  		  		iui.showPageById("searchForm");
+  		  	});
+
+			Y.Stock.util.hookEvent("#edit_btn", "click", Y.Stock.viewPort.onEdit);
+			Y.Stock.util.hookEvent("#save_btn", "click", Y.Stock.viewPort.onSave);
+			Y.Stock.quoteMgr.updateAllQuotesFromAccounts();
+  		});
+  	</script>
+</body>

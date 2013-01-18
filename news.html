@@ -1,0 +1,35 @@
+<html>
+  <head>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>News</title>
+	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.2.0/build/cssreset/reset-min.css">
+	<script src="http://yui.yahooapis.com/3.2.0/build/yui/yui-debug.js"></script> 
+	<script src="./js/config.js"></script>
+	<script src="./js/data.js"></script>
+  </head>
+
+  <body>
+  	<div class="toolbar">
+	    <h1 id="pageTitle"></h1>
+	    <a id="backButton" class="button" href="#"></a>
+	    <a id="save_btn" class="button hidden">Save</a>
+	    <a id="edit_btn" class="button hidden">Edit</a>
+		<span id="refreshBtn" class="visible button refresh_quotes" title="Refresh quotes"><img class="toolbar_btn_icon" src="../res/sync.png"></span>
+	</div>
+	<div id="home" title="Home" selected="true">
+  	</div>
+  	<script>
+		var Y = new YUI(YUI_Config);
+		var DEBUG_MODE = true;
+  		Y.use("news", function(Y) {
+  		  	Y.on('quotesInfoUpdated',function(){
+      		  	Y.Stock.News.render();
+      		  	Y.later(500,  this, function() {
+      		  	    iui.showPageById("news");
+      		  	}, false)
+            });
+  		  	Y.Stock.quoteMgr.updateAllQuotesFromAccounts();
+  		});
+  	</script>
+</body>

@@ -1,0 +1,92 @@
+<html>
+  <head>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;">
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<title>Stock Tracker</title>
+	<style type="text/css" media="screen">@import "../iui/iui.css";</style>
+	<link rel="stylesheet" title="Default" href="../iui/t/default/default-theme.css" type="text/css">
+	<link rel="stylesheet" href="../iui/iui-panel-list.css" type="text/css">
+	<link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/3.2.0/build/cssreset/reset-min.css">
+	<link rel="stylesheet" type="text/css" href="../sdk/sdk.css" />
+	<script type="application/x-javascript" src="../sdk/sdk.js"></script>
+	<link rel="stylesheet" type="text/css" href="../css/stocktrack.css" />
+	<script type="application/x-javascript" src="../iui/iui.js"></script>
+	<script src="http://yui.yahooapis.com/3.2.0/build/yui/yui-min.js"></script> 
+	<script src="../js/templates/template_view_stock.js"></script> 
+	<script src="../js/template.js"></script> 
+	<script src="../js/util.js"></script> 	
+	<script src="../js/data.js"></script> 	
+	<script src="../js/portfoliomgr.js"></script> 	
+	<!-- script src="../js/stocktrack.js"></script>  -->
+  </head>
+
+  <body style="background-color: #C5CCD4;">
+  	<div class="toolbar">
+	    <h1 id="pageTitle"></h1>
+	    <a id="backButton" class="button" href="#"></a>
+	    <a id="save_btn" class="button hidden">Save</a>
+	    <a id="edit_btn" class="button hidden">Edit</a>
+		<span id="refreshBtn" class="visible button refresh_quotes" title="Refresh quotes"><img class="toolbar_btn_icon" src="../res/sync.png"></span>
+	</div>
+	<div id="editPortfolio" selected="true">
+  	</div>
+	<script>
+		var Y = new YUI();
+		Y.use("substitute", "node", function() {
+		   
+		    var params = { title: "Add a Portfolio", name: "", cash: 0 };
+		    Y.one("#editPortfolio").setContent(Y.Lang.substitute(templates["edit_portfolio"], params));
+		    Y.one("#editPortfolio .add_position").on("click", function() {        
+		        var params = { symbol: "", shares: "", paid: 0, date: "", note: ""};
+		        Y.one("#editPortfolio .add_position").insert(Y.Lang.substitute(templates["new_stock"], params), "before");
+		    });
+			var params1 = { port_id: "pf_1", port_name: "Total Assets", market_value: "$224,330", change: "$13423", value_delta: "10.9%", gain: "$23424 (19.4%)" };
+			var params = { port_id: "pf_1", port_name: "Individual Account", market_value: "$54,330", change: "$13423", value_delta: "10.9%", gain: "$23424 (19.4%)" };
+			
+			var b = '<table class="buttons"><tr><td><div id="showNews" class="flat_button"><a href="#news"><label>News</label></a></div></td><td><div class="settings flat_button"><a href="#settings"><label>Settings</label></a></div></td></tr></table>'
+			
+			var html = "<h2> Design 1</h2>";
+			
+			var tem3 = ['<div class="port_summary {classes} round_block test2 test10" port_id="{port_id}">',
+			            '<div class="block header dark_bg bold">',
+		                '<h2 class="name">{port_name}<span class="market-value value"">{market_value}</span></h2>', 
+		            '</div>',
+		            '<div class="block loading hidden">Loading...</div>',
+		            '<div class="block content color_bg">',
+		                '<div class="round_header test">',
+		                    '<table class="sub_header">',
+		                        '<tr>',
+			                        '<td class="first positive value-delta"><div class="">Day\'s Change</div><div class="title value-delta price">{change} ({value_delta})</div></td>',
+		                            '<td class="last negative gain"><div class="value">Gain/Loss</div><div class="title value price">{gain}</div></td>',
+		                        '</tr>',
+		                    '</table>',
+		                '</div>',
+		            '</div>{list}',
+		        '</div>'].join("\r\n");
+			var list = ['<div class="block test4">',
+				'<div class="title header"><h2>Portfolio 1<span class="market-value value">$50,871</span></h2></div>',
+				'<table class="content row">',
+					'<tr class="gain">',
+						'<td><div class="label">Gain/Loss</div></td>',
+						'<td><div class="value info negative">$23432 (3.5%)</div></td>',
+					'</tr>',
+					'<tr class="value-delta">',
+						'<td><div class="label">Day\'s Change</td>',
+						'<td><div class="value info">$2321 (23.5%)</div></td>',
+					'</tr>',
+				'</table>',
+			'</div>'].join('');
+			
+			params1.list = '<div class="block test6 price title">Show individual accounts</div>';
+			html += Y.Lang.substitute(tem3, params1);
+			html += '<br><br><h2>Design 2 - expanded</h2>';
+			params1.list = list + list + list + '<div class="block test6 price title">Hide individual accounts</div>';
+			
+			
+			html += Y.Lang.substitute(tem3, params1);
+					
+			
+			document.getElementById('editPortfolio').innerHTML = html;
+		});
+	</script>
+</body>
