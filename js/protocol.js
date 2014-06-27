@@ -43,12 +43,12 @@ YUI.add('protocol', function (Y) {
     		jsonpRequest("editCurrentCashBalance", {pfid: pfid, cashamt:cashamt});    		
     	},
     	// Resp: "stid": val
-    	addStockTransaction = function (pfid, symbol, shares, price, commmission, date, note) {
+    	addStockTransaction = function (pfid, symbol, sectype, shares, price, commmission, date, note) {
     		var params = {
     				pfid: pfid, 
     				sym: symbol,
     				sttype: shares > 0 ? 0 : 1,	// BUY
-    				sectype: symbol.length > 15 ? 1 : 0,
+    				sectype: sectype,
     				qty: Math.abs(parseInt(shares ? shares : 0)),
     				price: price ? price : 0,
     				comm: commmission,	

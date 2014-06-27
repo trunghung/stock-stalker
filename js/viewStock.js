@@ -22,7 +22,8 @@ YUI.add('view_stock', function (Y) {
             Y.later(0, this, createMarkup, false);
         },
         _onNewsFeedDownloaded = function(results) {
-        	Y.Stock.News.parseReceivedNewsFeed(_root.one(".news_container"), 4, results);
+			if (results.query && results.query.results.item)
+				Y.Stock.News.parseReceivedNewsFeed(_root.one(".news_container"), 4, results.query.results.item);
         },
         createMarkup = function() {
             var info = getInfo();
@@ -99,7 +100,7 @@ YUI.add('view_stock', function (Y) {
                 }
             }
         },
-        _generateLotMarkup = function(lots, templateId) {
+        _generateLotMarkup = function(lots, portName, templateId) {
         	var index=0, lot, params, html = [];
         	for (index in lots) {          
         		lot = lots[index];
@@ -110,7 +111,7 @@ YUI.add('view_stock', function (Y) {
         					buy: formatTagValue(lot.buy, "price"),
         					shares: lot.shares,
         					date: lot.date || "",
-        					note: lot.note || ""
+        					port_name: portName || ""
         					};
         			html.push(Y.Lang.substitute(templates[templateId], params));
         		}
@@ -121,7 +122,7 @@ YUI.add('view_stock', function (Y) {
         	var port = _portMgr.getPortfolio(portId), 
         	params, htmlLots=[];
         	if (port) {            	
-            	htmlLots = _generateLotMarkup(port.content, "position_item");
+            	htmlLots = _generateLotMarkup(port.content, port.name, "position_item");
         		params = {
         				port_id: port.id, 
         				port_name: port.name,

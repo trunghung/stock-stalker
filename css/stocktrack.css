@@ -148,10 +148,10 @@ table.stock {
 .small_text {
 	font-size: 75%;
 }
-.even {
+table.even_odd tr:nth-child(even) {
 	background-color: #E6EFF7;
 }
-.odd {
+table.even_odd tr:nth-child(odd) {
 	background-color: white;
 }
 a {
@@ -321,7 +321,7 @@ table.buttons td:last-child {
 	padding-left: 5px;
 }
 .arrow {
-	background: url("http://www.jimming.com/money/res/arrow.png") no-repeat scroll 100% 50% transparent;
+	background: url("http://pair.jimming.com/money/res/arrow.png") no-repeat scroll 100% 50% transparent;
 }
 
 .fade {

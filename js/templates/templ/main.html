@@ -1,0 +1,90 @@
+<div id="header" class="toolbar prerender_hidden hidden">
+    <h1 id="pageTitle"></h1>
+    <a id="backButton" class="button" href="#"></a>
+    <a id="save_btn" class="button blueButton hidden">Save</a>
+    <a id="edit_btn" class="button hidden">Edit</a>
+	<span id="refreshBtn" class="visible button refresh_quotes" title="Refresh quotes"><img class="toolbar_btn_icon" src="./res/sync.png"></span>
+</div>
+<div id="login" class="page panel" title="" toolbar="false">
+	<h2 class="load_title">Loading...</h2>
+	<div id="auth_iframe"></div>
+</div>
+<form id="editStock" class="dialog"></form>
+<form id="new_trans" class="dialog"></form>
+
+<div id="home" class="page panel prerender_hidden" title="Home" button="refreshBtn"  selected="true">
+	<ul class="tabs three_tabs">
+		<li class="viewHome tab first active" view="viewHome" onclick=""><a>Snapshot</a></li><li class="viewNews tab" view="viewNews" onclick=""><a>Market News</a></li><li class="viewPortfolios tab last" view="viewPortfolios" onclick=""><a>Portfolios</a></li><!--<li class="viewChart tab last" view="viewChart" onclick=""><a>Chart</a></li>-->
+	</ul>		
+	<div class="viewHome tab_content active">
+		<div class="feature_blocks">
+			<table>
+				<tr>
+					<td class="feature_block slot_0" >
+				  </td>
+					<td class="feature_block slot_1 last" >
+				  </td>
+				</tr>
+				<tr>
+					<td class="feature_block slot_2">
+				  </td>
+					<td class="feature_block slot_3 last">
+				  </td>
+				</tr>
+				<tr>
+					<td class="feature_block slot_4">
+				  </td>
+					<td class="feature_block slot_5 last">
+				  </td>
+				</tr>
+			</table>
+		</div>			
+	</div>
+	<div class="viewNews tab_content">
+		<h2 class="section_title">Business Top News</h2>
+		<ul id="scroll-content" class="block rounded news_container hide_extra_items"></ul>
+	</div>
+	<div id="portfolio_summaries" class="viewPortfolios tab_content"></div>
+	<div class="quote_update tip"></div>
+	<div class="viewChart tab_content">
+		<div class="chart hidden">
+			<div class="port_name"></div>
+			<div class="content"></div>
+		</div>
+	</div>
+	<table id="app_toolbar" class="buttons">
+		<tr>
+			<td><button class="pageLink flat_button" targetPage="news">News</button></td>
+			<td><button class="pageLink flat_button" targetPage="settings">Settings</button></td>
+		</tr>
+		<tr>
+			<td><button class="pageLink flat_button newPort">New Portfolio</button></td>
+			<td><button class="pageLink flat_button logout">Logout</button></td>
+		</tr>
+		<tr>
+			<td><button class="pageLink flat_button exportHist">Export History</button></td>
+			<td></td>
+		</tr>
+	</table>
+	<div id="debug_tool" class="hidden">
+		<br><br>
+		<h2>These buttons for Debug Purpose</h2>
+		<table class="buttons">
+			<tr>
+				<td><button id="save" class="flat_button">Save</button></td>
+				<td><button id="clear" class="flat_button">Clear</button></td>
+			</tr>
+		</table>	
+		<table class="buttons">
+			<tr>
+				<td><button class="dump_cache flat_button">Dump Cache</button></td>
+				<td><button class="toggle_log flat_button">Log</button></td>
+			</tr>
+		</table>
+	</div>
+	<div id="logconsole" class="hidden">Log: <button class="toggle_log">Hide</button> - <button class="clear_log">Clear Log</button><br><div id="log"></div></div>
+		
+</div>
+<div id="view_pf" class="page panel view_pf" title="Portfolio" button="refreshBtn" > </div>
+<div id="view_stock" class="page panel edit" title="Stock" button="" > </div>
+<div id="settings" class="page panel" title="Settings" class="panel iui"> </div>

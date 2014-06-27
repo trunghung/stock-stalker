@@ -10,7 +10,7 @@ var TAG_FORMATTER = {
 	"pf-percent":           { decimal: 0.2, dollarSign: false, percentSign: true, label: "Position" },
 	"shares":               { decimal: 0, dollarSign: false, percentSign: false, label: "Shares" }
 };
-function formatTagValue(tagValue, tag, noDollarSign) {
+function formatTagValue(tagValue, tag, noDollarSign, maxLength) {
 	if (Y.Lang.isNull(tagValue) || Y.Lang.isUndefined(tagValue)) 
 		tagValue = "";
 	else {
@@ -46,6 +46,8 @@ function formatTagValue(tagValue, tag, noDollarSign) {
 				tagValue = appendPercentSign(tagValue);
 		}
 	}
+	if (maxLength && tagValue.length > maxLength)
+		tagValue = tagValue.substr(0, maxLength);
 	return tagValue;
 }
 function getTagLabel(tag) {
@@ -131,7 +133,7 @@ function saveLocal(key, obj){
 }
 function readLocalStorage(key, keyword) {
     if (!window.localStorage){
-        return;
+        return null;
     }
     return localStorage.getItem(key);
 }
@@ -228,6 +230,10 @@ function forceNumericInput(node) {
 YUI.add('util', function (Y) {
     Y.namespace("Stock");
     var Util = {
+	isPageActive: function(cssSelector) {
+		var node = Y.one(cssSelector);
+		return (node && node.getAttribute("selected") == "true");
+	},
         //Update all the blocks that belong to this portfolio
         updatePortfolioSummaryBlocks: function(port) {
             var node;

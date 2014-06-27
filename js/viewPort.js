@@ -4,16 +4,18 @@ YUI.add('view_portfolio', function (Y) {
     var viewPort = function() {
         var _util = Y.Stock.util,
         _portMgr = Y.Stock.portMgr,
+	   _pageId = "#view_pf",
         _mUI = Y.mUI,
         _portfolio = null, 
         _portId = null,
-        _root = null,
+	   _inited = false,
+        _root = Y.one(_pageId),
         _positionExpanded = false,
         _combinedStocks = null,
         _contentReady = false,
         _isPortrait = -1,
         _chartDrawPending = false,
-        _render = function(port_id){ 
+        _render = function(port_id) { 
             // If we already rendered this portfolio on this page, no need to re-render it, just show right away
             // If the combine option changed, we should render it again
             if (_positionExpanded === UI_SETTINGS.expandPositions && port_id == _portId) {
@@ -23,7 +25,7 @@ YUI.add('view_portfolio', function (Y) {
             if (false === _contentReady) {
 	            Y.on("contentready", function () {
 	            	_contentReady = true;
-	            }, "#view_pf");
+	            }, _pageId);
             }
             _portId = port_id;
             _portfolio = _portMgr.getPortfolio(_portId);
@@ -47,43 +49,72 @@ YUI.add('view_portfolio', function (Y) {
             else {
             	stocks = _util.cloneArray(_portfolio.content);            	
             }
-    		_positionExpanded = UI_SETTINGS.expandPositions;
-        	stocks.sort(_util.stockSortFunc);
+		  _positionExpanded = UI_SETTINGS.expandPositions;
+		  stocks.sort(_util.stockSortFunc);
             
-        	if (_combinedStocks) delete _combinedStocks;
-        	_combinedStocks = stocks;
+		  _combinedStocks = stocks;
         },
+	   _getRenderContext = function() {
+		  return {port: _portfolio,
+				positions: _combinedStocks,
+				tags: VIEWS[UI_SETTINGS.stockListView].tags,
+				viewPosition: UI_SETTINGS.stockListView == "viewPosition",
+				viewPerf: UI_SETTINGS.stockListView == "viewPerformance",
+				getTagClass: function(chunk, context, bodies, params) {
+				    switch(params.tag) {
+					   case "change":
+					   case "percent-change":
+					   case "value-delta":
+					   case "market-value":
+					   case 'value-delta-percent':
+					   case 'gain':
+					   case 'gain-percent':
+					   {
+						  var tagValue = Y.Stock.quoteMgr.getTagInfo(_getPositionInfo(params.index), _portId, params.tag);
+						  if (isValueNegative(tagValue)) {
+							 chunk.write("negative");
+						  }
+						  if (VIEWS[UI_SETTINGS.stockListView].landscapeTags[params.tag]) {
+							 chunk.write(" landscape_col");
+						  }
+						  break;
+					   }
+				    }
+				},
+				getTagValue: function(chunk, context, bodies, params) {
+				    var tagValue = Y.Stock.quoteMgr.getTagInfo(_getPositionInfo(params.index), _portId, params.tag);
+				    chunk.write(formatTagValue(tagValue, params.tag, false, 10));
+				}};
+	   },
         _createMarkup = function(navigateToPageWhenDone) {
             _mUI.showLoading();
             var  params, summary, stockList, rootInfo;
             if (_portfolio) {
-                summary = Y.Stock.home.getSummaryBlockMarkup(_portfolio, true, true, false);
-                _generateCombinedStocks();	// Generated the stock view
-                stockList = generateStockListMarkup(_portfolio, UI_SETTINGS.stockListView);
-                params = { port_id: _portfolio.id, port_name: _portfolio.name, summary: summary, stocks: stockList, pf_type: ""};
-                // OPTIMIZE: Change the view_stock page to show edit button or not
-                /*var nodeViewStock = Y.one("#view_stock");
-                if (nodeViewStock)
-                	nodeViewStock.setAttribute("button", _portfolio.id === "total" ? "" : "edit_btn");
-				*/
-                // If the view portfolio page isn't up, we will insert the template
-                rootInfo = _util.getOrCreatePageNode("view_pf", Y.Lang.substitute(templates["view_portfolio_page"], params));
-                _root = rootInfo.node;
-                if (rootInfo.created) {                    
-                    bindUI();
-                    _setActiveTab(UI_SETTINGS.stockListView);
-                }
-                else {
-                    _root.one("#summary_container").setContent(summary);
-                    _root.one("#stocks_container").setContent(stockList);
-                }
+			 _generateCombinedStocks();
+			 var context = _getRenderContext();
+			 
+			 if (!_inited) {
+				_inited = true;
+				dust.render("view_portfolio_page", context, function(err, out){
+				    _root.setContent(out);
+				    _renderSummaryBlock();
+				    _renderStockList();
+				    bindUI();
+				    _setActiveTab(UI_SETTINGS.stockListView);
+				});
+			 }
+			 else {
+				_renderSummaryBlock();
+				_renderStockList();
+			 }
+                
                 if (_portfolio.id == "total")
                 	_root.addClass("total_pf");
                 else
                 	_root.removeClass("total_pf");
             }         
                  
-            _updateStockContent();
+            //_updateStockContent();
             _util.updatePortfolioSummaryBlocks(_portfolio);
             
             if (navigateToPageWhenDone) {
@@ -123,6 +154,9 @@ YUI.add('view_portfolio', function (Y) {
             		Y.Stock.portMgr.renamePortfolio(_portId, portName);            		
             	}
             });
+			_root.one(".delete_port").on("click", function() {
+			   _portMgr.removePortfolio(_portId);
+			});
             Y.on("portfoliosReady", function() {
             	_onPortChange(_portMgr.getPortfolio(_portId));
             }, t);
@@ -135,9 +169,11 @@ YUI.add('view_portfolio', function (Y) {
             });
             Y.on("orientationChanged", _onOrientationChanged);
             Y.on("stock_history_recorded", _onStockHistoryRecorded);
-            Y.on("quotesInfoUpdated", function(){
-            	_updateStockContent();
-            });
+            Y.on("quotesInfoUpdated", function() {
+			 var delay = _util.isPageActive(_pageId) ? 10 : 500;
+			 console.log(["quotesInfoUpdated: updating", _pageId, "in", delay, "ms"].join(" "));
+			 Y.later(delay, this, _renderStockList);
+		  });
         },
         _onPortChange = function(port) {
             // Port updated, portfolio obj may change, so we regrab it and update the stock table
@@ -158,7 +194,7 @@ YUI.add('view_portfolio', function (Y) {
         	}
         },
         _showChart = function() {
-        	if (_chartDrawPending == false && _root.getAttribute("selected") == "true") {
+        	if (0 && _chartDrawPending == false && _root.getAttribute("selected") == "true") {
         		_chartDrawPending = true;
         		// BUGBUG show loading screen for chart and hide it while we wait
                 Y.later(500,  this, function() {
@@ -188,119 +224,32 @@ YUI.add('view_portfolio', function (Y) {
                 view = target.getAttribute("view");
                 UI_SETTINGS.stockListView = view;
                 _setActiveTab(view);
-                _updateStockContent();
-                //log("ViewPort: Tab clicked. Classes: " + e.currentTarget.getAttribute("class") + " view: " + view + " setting view: " + UI_SETTINGS.stockListView);
+                _renderStockList();
             }
         },
-        _updateStockContent = function() {
-            var stockList = generateStockListMarkup(_portfolio, UI_SETTINGS.stockListView);
-            // TODO: Use fading out and in
-            _root.one("#stocks_container").setContent(stockList);
-            updateStocksTable();
+	   _renderSummaryBlock = function() {
+		  dust.render("portfolio_summary", _portfolio, function(err, out) {
+			 _root.one("#summary_container").setContent(out);
+		  }); 
+	   },
+        _renderStockList = function() {
+		  var context = _getRenderContext();
+		  dust.render("portfolio_stocks_list", context, function(err, out){
+			 _root.one("#stocks_container").setContent(out);
+		  });
         },
         onStockEntryClicked = function(e) {
             if (_mUI.clickCheck(e)){
                 var node = e.currentTarget,
-                positionId = node.getAttribute("id"),
-                stock = node.getAttribute("stock");
-                log("show stock info" + stock);
+                positionId = node.getAttribute("lotId"),
+                symbol = node.getAttribute("sym");
+                log("show stock info" + symbol);
                 e.preventDefault();
-                if (stock) {
+                if (symbol) {
                 	Y.use("view_stock", function(){
-                		Y.Stock.view_stock.render(stock, _portfolio.id, positionId);
+                		Y.Stock.view_stock.render(symbol, _portfolio.id, positionId);
                 	});
                 }
-            }
-        },
-        updateStocksTable = function () {
-        	// TODO use alternating CSS style
-            // add odd/even classes      
-        	var nodes = _root.one("#stocks_container").all('.group_content');
-            nodes.even().addClass("even");
-            nodes.odd().addClass('odd');
-            var page = _root.one("#stocks_container");
-            page.all(".update_target").each(updateStockEntryMarkup);
-        },
-        // TODO: still needed?
-        computeHeaders = function(view) {
-            var html = [], i=0, curIndex, viewCount = view.length, tag, tagLabel;
-            html[i++] = '<tr class="header">';
-            for (curIndex=0; curIndex < viewCount; curIndex++) {
-                tag = view[curIndex];
-                tagLabel = getTagLabel(tag);
-                if (tag != "symbol")
-                    html[i++] = '<th class="header title info">';
-                else
-                    html[i++] = '<th class="header title">';
-                html[i++] = tagLabel;
-                html[i++] = '</th>';
-            }
-            html[i++] = '</tr> ';
-            return html.join('');
-        },
-        //viewPort copied
-        generateStockListMarkup = function(portfolio, viewName) {
-            var index=0, stocks = _combinedStocks, extraClass, symbol,
-                html = [], i=0, header, view, info,
-                tag=0, tagValue;
-            if (!viewName || !VIEWS[viewName]) {
-                viewName = DEF_VIEW;
-            }
-            log(["ViewPort: Generating page for port: ", portfolio.id, " with view: ", viewName].join(""));
-            header = VIEWS[viewName].header;
-            view = VIEWS[viewName].columns;
-            landscapeView = VIEWS[viewName].columns;
-            html[i++] = '<table class="stocks ';            
-           
-            html[i++] = '" port_id="';
-            html[i++] = portfolio.id;
-            html[i++] = '">';
-            //html[i++] = computeHeaders(view); 
-            html[i++] = header;
-            for (index in stocks) {
-            	positionID = stocks[index].id;
-                symbol = stocks[index].symbol;
-                hasShare = stocks[index].shares != 0;
-                extraClass = hasShare ? "" : "no_shares";
-                html[i++] = ['<tr class="group_content entry ', extraClass,'" stock="', symbol, '" id="', positionID, '" index="', index, '" port_id="', portfolio.id,'" onclick="">'].join('');
-                for (tag in view) {
-                    info = view[tag];
-                    // Shrink the stock symbol to just 6 characters
-                    if (tag == "symbol")
-                        tagValue = symbol.substr(0,6);
-                    else
-                        tagValue = "";
-                    param = {   tag: tag,
-                                stock: symbol,
-                                index: index,
-                                port_id: portfolio.id,
-                                tagValue: tagValue,
-                                classes: info.landscape ? "landscape_col" : ""
-                                };                    
-                    html[i++] = Y.Lang.substitute(templates["stock_entry_in_list"], param);
-                }
-                html[i++] = '</tr> ';
-            }
-            html[i++] = '</table>';
-            return html.join('');
-        },
-        setDisplayClassForNode = function(node, tag, tagValue) {
-            if (!tagValue) 
-                return;
-            
-            switch(tag) {
-            case "change":
-            case "percent-change":
-            case "value-delta":
-            case "market-value":
-            case 'value-delta-percent':
-            case 'gain':
-            case 'gain-percent':
-                if (isValueNegative(tagValue))
-                    node.addClass("negative");
-                else
-                    node.removeClass("negative");
-                break;
             }
         },
         _getPositionInfo = function(index) {
@@ -312,18 +261,7 @@ YUI.add('view_portfolio', function (Y) {
         		info = _portMgr.getPositionInfo(_portId, index);
         	}
             return info;
-        },
-        updateStockEntryMarkup = function(node) {
-            var tag = node.getAttribute("val-type"),
-            tagValue;
-            if (tag.length > 0 && tag !== "symbol") {
-                index = node.getAttribute("index");                
-                tagValue = Y.Stock.quoteMgr.getTagInfo(_getPositionInfo(index), _portId, tag);
-                tagValue = formatTagValue(tagValue, tag);
-                setDisplayClassForNode(node, tag, tagValue);    
-                node.setContent(tagValue);
-            }   
-        },        
+        },      
         edit = function() {
         	// Can't edit total _portfolio
         	if (_portfolio.id != "total") {
@@ -347,28 +285,43 @@ YUI.add('view_portfolio', function (Y) {
     log("ViewPort: loaded");
 }, '1.0.1', {requires: ['node', "PortfolioManager", "util", "templates", "home"/*, 'event', 'anim'*/]});
 
-function addZeroIfNeeded(value) {
-	if (value < 10)
-		value = "0" + value;
-	return value;	
+function addZeroIfNeeded(value, length) {
+    var i;
+    // convert to string
+    value = value + "";
+    for (i=value.length; i < length; i++) {
+	    value = "0" + value;
+    }
+    return value;	
 }
 function extractTransactionInfo(node, portId) {
-	var info = { portId: portId};
+	var date, info = { portId: portId};
 	// TODO: validate input
+	var isOption = !node.hasClass("stock_trans");
 	info.positionId = node.getAttribute("positionId");
 	info.sym = node.one(".symbol").get("value");
+	info.secType = isOption ? 1 : 0;
 	info.shares = parseFloat(node.one(".shares").get("value").replace(",",""));
 	info.price = parseFloat(node.one(".buy").get("value").replace(",",""));
 	info.comm = parseFloat(node.one(".comm").get("value").replace(",",""));
-	var date = node.one(".date").get("value");
+	if (isOption) {
+	    var strike_price = parseFloat(node.one(".strike_price").get("value").replace(",",""));
+	    var OptionType = (node.one("#putOrCall").getAttribute("toggled") == "true") ? "P" : "C";
+	    var date = node.one(".strike_date").get("value");
+	    date = date.split("/");
+	    // Public option is formatted as followed sym + YYMMDD + [P,C] + 8-digit stock price (to 1/1000 of a dollar accurracy)
+	    info.sym = info.sym + date[2]%1000 + addZeroIfNeeded(date[0], 2) + addZeroIfNeeded(date[1], 2) + OptionType + addZeroIfNeeded(strike_price*1000, 8);
+	}
+	date = node.one(".date").get("value");
 	date = date.split("/");
-	info.date = [date[2], addZeroIfNeeded(date[0]), addZeroIfNeeded(date[1])].join("");
+	info.date = [date[2], addZeroIfNeeded(date[0], 2), addZeroIfNeeded(date[1], 2)].join("");
 	info.note = node.one(".note").get("value");
 	return info;
 }
 function getPositionParams(isSell, portId, lotId) {
 	var d = new Date, position = null,
-	params = {symbol: "", positionId: "", shares: "", buy: "", comm: "9.99", note: "" };
+	params = { stock_trans: "stock_trans", symbol: "", positionId: "", shares: "", buy: "", strike_price:"", expire_date: "",
+		    comm: "9.99", note: "", isPut: "false"};
 	params.date = [d.getMonth() + 1, d.getDate(), d.getFullYear()].join("/");
 	if (portId > 0 && lotId > 0) {
 		position = Y.Stock.portMgr.getPosition(portId, lotId);
@@ -397,6 +350,16 @@ function recordNewPosition (isSell, portId, positionId) {
 	params.trans_fields = Y.Lang.substitute(templates["trans_fields"], params);
 	html =  Y.Lang.substitute(templates["new_trans_dialog"], params);
 	node.setContent(html);
+	node.one(".content").addClass("stock_trans");
+	node.one("#stockOrOptions").on("click", function(e) {
+	    var toggled = e.currentTarget.getAttribute("toggled") == "true";
+	    if (toggled) {
+		node.one(".content").removeClass("stock_trans");
+	    }
+	    else {
+		node.one(".content").addClass("stock_trans");
+	    }
+	});
 	
 	Y.later(100,  this, function() {
 		iui.showPageById("new_trans");
@@ -409,6 +372,103 @@ function recordNewPosition (isSell, portId, positionId) {
 			// TODO need to check to make sure the necessary info are present
 			Y.Stock.portMgr.addStockTransaction(info);
 		});
+		node.one("input.symbol").on("change", function(e){
+		    var target = e.currentTarget,
+		    sym = target.get("value"),
+		    query, yqlQuery;
+		    if (sym.length > 0 && sym.length < 8) {
+			query = "SELECT * FROM yahoo.finance.option_contracts WHERE symbol='"+sym+"'";
+			log("Options: " + query);
+			yqlQuery = Y.YQL(query, {
+			    allowCache: true,
+			    on: {
+				success: function(result) {
+				    //log(result);
+				    if (result && result.query && result.query.results && result.query.results.option ) {
+					var html="",i, option, options = result.query.results.option;
+					if (options.lenght <= 0) {
+					    alert("There are no options for " + options.symbol + ".");
+					}
+					else {
+					    for (i in options.contract) {
+						option = options.contract[i];
+						html += ["<option value='", option, "'>", option, "</option>"].join("");
+					    }
+					}
+					node.one(".strike_date").setContent(html);					
+				    }
+				},
+				failure: function() {
+				    // BUGBUG
+				    alert("Can't download the list of options date");
+				}
+			    },
+			    timeout: 50000
+			});
+			yqlQuery.send();
+		    }
+		    
+		});
+		node.one("select.strike_date").on("change", function(e){
+		    var target = e.currentTarget,
+		    date = target.get("value"),
+		    sym = node.one(".symbol").get("value"),
+		    query, yqlQuery;
+		    if (sym.length > 0 && sym.length < 8) {
+			query = ["SELECT * FROM yahoo.finance.options WHERE symbol='", sym ,"' AND expiration='", date, "'"].join("");
+			log("Options: " + query);
+			yqlQuery = Y.YQL(query, {
+			    allowCache: true,
+			    on: {
+				success: function(result) {
+				    //log(result);
+				    if (result && result.query && result.query.results && result.query.results.optionsChain ) {
+					var html="",i, option,
+					optionsChain = result.query.results.optionsChain,
+					symbol = optionsChain.symbol,
+					expiration = optionsChain.expiration,
+					options = optionsChain.option;
+					if (!options || options.lenght <= 0) {
+					    alert("There are no options for " + options.symbol + ".");
+					}
+					else {
+					    /*
+					     "symbol": "GOOG130622C00330000",
+					    "type": "C",
+					    "strikePrice": "330",
+					    "lastPrice": "378.70",
+					    "change": "0",
+					    "changeDir": null,
+					    "bid": "421.2",
+					    "ask": "423.1",
+					    "vol": "10",
+					    "openInt": "10"
+					    */
+					    var OptionType = (node.one("#putOrCall").getAttribute("toggled") == "true") ? "P" : "C";
+					    for (i in options) {
+						option = options[i];
+						if (OptionType == option.type) {
+						    html += ["<option value='", option.symbol, "'>", (option.type == "C" ? "Call" : "Put"), " $", option.strikePrice, "</option>"].join("");
+						}
+					    }
+					}
+					node.one(".strike_price").setContent(html);
+					
+				    }
+				},
+				failure: function() {
+				    // BUGBUG
+				    alert("Can't download the list of options");
+				}
+			    },
+			    timeout: 50000
+			});
+			yqlQuery.send();
+		    }
+		    
+		});
+		
+	
 	}, null, false);
 }
 
@@ -418,7 +478,7 @@ function showEditTransaction(stock, portId, lotId, selectToSell) {
 	position = null,
 	lotsInfo= {}, lot, i=0, html = [], len = 0,
 	params = {type: "edit_stock", lots_info: "", positionId: "", shares: "", buy: "", comm: "", date: "", note: "" };
-	
+	node.addClass("stock_trans");
 	if (lotId >= 0) {
 		position = Y.Stock.portMgr.getPosition(portId, lotId);
 		len = 1;
@@ -440,15 +500,16 @@ function showEditTransaction(stock, portId, lotId, selectToSell) {
 	}
 	else {
 	    if (!position)
-		position = lotsInfo.lots[0];
+		  position = lotsInfo.lots[0];
 	    if (selectToSell && position) {
-		recordNewPosition(true, portId, position.id);		
+		  recordNewPosition(true, portId, position.id);
+		  return;
 	    }
 	    else {
-		params.type = "edit_stock";		
-		if (stock)
+		  params.type = "edit_stock";		
+		  if (stock)
 			params.symbol = stock;
-		if (position) {
+		  if (position) {
 			params.symbol = "" || position.symbol;
 			params.positionId = "" || position.id;
 			params.shares = "" || position.shares;

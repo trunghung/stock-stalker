@@ -2,11 +2,13 @@ YUI.add('home', function (Y) {
     Y.namespace('Stock');
     var homePage = function() {
         var _util = Y.Stock.util,
+	   _pageId = "#home",
         _root = null,
         _prefetching = true,
         _isPortrait = -1,
         _chartDrawPending = false,
         _lastTopNewsUpdatedTime = -1,
+	_curView = "viewHome",
         _mUI = Y.mUI,
         _render = function() {
             _root = Y.one("#home");
@@ -23,10 +25,10 @@ YUI.add('home', function (Y) {
         _insertPortfolioSummaries = function() {
             var cur=0, portfolios = Y.Stock.portMgr.getPortfolios();
             _root.one("#portfolio_summaries").setContent("");
-        	addPortSummaryToHomePage(portfolios["total"]);
+			addPortSummaryToHomePage(portfolios["total"]);
             
             for (cur in portfolios) {
-                if (cur != "total") {
+                if (cur != "total" && portfolios[cur].show !== false) {
                     addPortSummaryToHomePage(portfolios[cur]);
                 }
             } 
@@ -40,30 +42,26 @@ YUI.add('home', function (Y) {
         	hour = date.getHours();
         	if (_lastTopNewsUpdatedTime == -1 || _lastTopNewsUpdatedTime != hour) { 
         		_lastTopNewsUpdatedTime = hour;
-        		Y.Stock.quoteMgr.queryForTopNews(_onTopNewsDownload);
+				var query = 'select * from rss where url="http://hosted.ap.org/lineups/BUSINESSHEADS-rss_2.0.xml?SITE=NHPOR&SECTION=HOME"';
+				Y.YQL(query, {
+						allowCache: false,
+						on: {
+							success: _onTopNewsDownload
+						}
+				});
         	}
         },
         _getPortSummaryNode = function(port_id) {
             return _root.one(['#portfolio_summaries .port_summary[port_id="', port_id,'"]'].join(''));
         },
-        addPortSummaryToHomePage = function (port) {
-            if (port && port.show !== false) {
-                var summary = _getSummaryBlockMarkup(port, !UI_SETTINGS.hideHomeSumCash, !UI_SETTINGS.hideHomeSumGain, true),
-                nodeHome = _root.one("#portfolio_summaries"),   
-                nodeCur = _getPortSummaryNode(port.id);
-                
-                // If it exists, no need to insert it again
-                if (!nodeCur) {      
-                    nodeHome.append(summary);
-                }
-            }
-        },
         _initFeatureBlock = function(slot, symbol, shares, name, noPrefix) {
-        	var html, node = _root.one(".feature_blocks .slot_" + slot);
-        	if (node) {
-        		html = Y.Lang.substitute(templates["feature_block"], {symbol: symbol, shares: shares, name: name, noPrefix: noPrefix===true ? "true" : "false"});
-	        	node.setContent(html);
-        	}
+		  dust.render("feature_block", {symbol: symbol, shares: shares, name: name.substr(0, 10), noPrefix: noPrefix===true ? "true" : "false"}, function(err, out){
+			 var node = _root.one(".feature_blocks .slot_" + slot);
+			 if (node) {
+				node.setContent(out);
+			 }
+		  });
+        	
         },
         _renderFeatureBlocks = function() {
 	        _initFeatureBlock(0, UI_SETTINGS.indices[0], 1, INDICES[UI_SETTINGS.indices[0]], true);
@@ -106,26 +104,33 @@ YUI.add('home', function (Y) {
             }
         },
         onQuotesUpdated = function () {
-        	_updatePortfolioSummaryBlocks();
-        	var positions = _util.consolidatePositions(Y.Stock.portMgr.getPortfolio("total").content, true);
-        	positions.sort(_util.stockSortFuncByChange);
-        	var len = positions.length,
-        	position = positions[0];
-            _initFeatureBlock(2, position.symbol, position.shares, position.symbol);
-            if (len >= 2) {
-            	position = positions[1];
-            	_initFeatureBlock(3, position.symbol, position.shares, position.symbol);
-            }
-            if (len >= 4) {
-            	position = positions[2];
-            	_initFeatureBlock(4, position.symbol, position.shares, position.symbol);
-            }
-            if (len >= 4) {
-            	position = positions[3];
-            	_initFeatureBlock(5, position.symbol, position.shares, position.symbol);
-            }            	
-            _updateFeatureBlock();
-            Y.later(500, this, _getTopNews, false);
+            var positions = _util.consolidatePositions(Y.Stock.portMgr.getPortfolio("total").content, true);
+            positions.sort(_util.stockSortFuncByChange),
+            len = positions.length,
+            position = positions[0],
+	    defaultDelay = _util.isPageActive(_pageId) ? 10 : 500,
+	    updateDelayHome = (_curView == "viewHome") ? 10 : defaultDelay,
+	    updateDelayNews = (_curView == "viewNews") ? 10 : defaultDelay,
+	    updateDelayPortfolios = (_curView == "viewPortfolios") ? 0 : defaultDelay;
+	    Y.later(updateDelayHome, this, function() {
+		// Immediately update the component that is active
+		_initFeatureBlock(2, position.symbol, position.shares, position.symbol);
+		if (len >= 2) {
+		    position = positions[1];
+		    _initFeatureBlock(3, position.symbol, position.shares, position.symbol);
+		}
+		if (len >= 4) {
+		    position = positions[2];
+		    _initFeatureBlock(4, position.symbol, position.shares, position.symbol);
+		}
+		if (len >= 4) {
+		    position = positions[3];
+		    _initFeatureBlock(5, position.symbol, position.shares, position.symbol);
+		}            	
+		_updateFeatureBlock();
+	    }, false);
+            Y.later(updateDelayNews, this, _getTopNews, false);
+	    Y.later(updateDelayPortfolios, this, _updatePortfolioSummaryBlocks, false);
         },
         onPortfolioAdded = function (port) {
             if (port) {
@@ -178,9 +183,11 @@ YUI.add('home', function (Y) {
                 }
             }, ".port_summary");
             Y.on("orientationChanged", _onOrientationChanged);
+	    /*
             Y.on("quotesInfoUpdated", function() {
             	Y.later(500, this, _showChart, false);
             });
+            */
             _root.one(".logout").on("click", Y.Stock.Protocol.logout);
             
             node = _root.one(".tabs");
@@ -203,17 +210,17 @@ YUI.add('home', function (Y) {
             }
         },
         _onNavTabClicked = function(e) {
-        	var view, target = e.currentTarget;
+            var view, target = e.currentTarget;
             e.preventDefault();
             if (_mUI.clickCheck(e) && !target.hasClass("active")) {
                 view = target.getAttribute("view");
                 _setActiveTab(target.ancestor(".tabs"), view);
                 if (view == "viewChart")
-                	_showChart();
+                    _showChart();
             }
         },
         _setActiveTab = function(root, view) {
-        	var nodeNew = root.one(['.', view].join("")),
+            var nodeNew = root.one(['.', view].join("")),
             nodeCur = root.all('.active'),
             newTab = _root.one(['div.', view].join("")),
             curActiveTabs = _root.all('div.active');
@@ -223,11 +230,12 @@ YUI.add('home', function (Y) {
                 nodeNew.addClass("active");
             if (newTab)
             	newTab.addClass("active");
+	    _curView = view;
         },
         _onStockHistoryRecorded = function (port) {
-        	if (port.id === "total") {
-        		_showChart();
-        	}
+	    if (port.id === "total") {
+		_showChart();
+	    }
         },
         _onOrientationChanged = function() {
         	var isPortrait = Y.mUI.getIsPortrait();
@@ -248,8 +256,18 @@ YUI.add('home', function (Y) {
         },
         _onTopNewsDownload = function(results) {
         	Y.use("news", function(Y){
-            	Y.Stock.News.parseReceivedNewsFeed(_root.one(".news_container"), 10, results);
+            	Y.Stock.News.parseReceivedNewsFeed(_root.one(".news_container"), 10, results.query.results.item);
         	});
+        },
+	   
+        addPortSummaryToHomePage = function (port) {
+		  // If it exists, no need to insert it again
+		  if (port && !_getPortSummaryNode(port.id)) {
+			 dust.render("portfolio_summary", port, function(err, out) {
+				_root.one("#portfolio_summaries").append(out);
+			 });
+                
+		  }
         },
         _getSummaryBlockMarkup = function(port, showCash, showGain, clickable) {
             var param = {
@@ -260,7 +278,7 @@ YUI.add('home', function (Y) {
                         value_delta: "",
                         classes: (showCash ? "" : "hide_cash ") + (showGain ? "" : "hide_gain"),
                         clickable: clickable ? 'onclick=""' : ''
-                        },
+                        };
             templateSum = templates["home_account_summary"];
             summary = Y.Lang.substitute(templateSum, param);
             return summary;

@@ -301,14 +301,13 @@ YUI.add('PortfolioManager', function (Y) {
 	        			if (Y.Lang.isArray(lot)) {
 	        				position = {
 	        							id: lot[0],
-	        							date: lot[1] || "",
-	        							symbol: lot[2],
-	        							// sectype: lot[3],
-	        							// 
-	        							shares: lot[4] || 0,
-	        							// option_shares: lot[5],
-	        							buy: lot[6] || 0,
-	        							comm: lot[7],
+	        							date: lot[1] || "", // Date in format yyyyMMdd. Example: 20110228
+	        							symbol: lot[2], 	// 
+	        							sectype: lot[3], 	// Type of security: 0=EQUITY, 1=OPTION
+	        							qty: lot[4] || 0, 	// Quantity bought or sold. For equity, this is number of shares. For options, this is number of contracts.
+	        							shares: lot[5],	// Number of shares (can be negative). For options, this is qty * 100
+	        							buy: lot[6] || 0,	// Price per share in dollars
+	        							comm: lot[7],		// Commission in dollars
 	        							note: decodeURIComponent(lot[8]) || ""
 	        							};
 	        				port.content.push(position);
@@ -441,7 +440,7 @@ YUI.add('PortfolioManager', function (Y) {
         };
         _this.addStockTransaction = function(info) {
              if (info && info.sym) {  
-            	 _sp.addStockTransaction(info.portId, info.sym, info.shares, info.price, info.comm, info.date, info.note);
+            	 _sp.addStockTransaction(info.portId, info.sym, info.secType, info.shares, info.price, info.comm, info.date, info.note);
             	 
      			// If we are selling a position, let's remove the position right away
             	 if (info.shares < 0 && info.positionId) {
@@ -601,11 +600,11 @@ YUI.add('PortfolioManager', function (Y) {
                 return this.portfolios[port_id].content[index];
             }
             catch (e) {
+				return -1;
             }
         };       
     };
 
     Y.Stock.portMgr = new PortfolioManager();
-    Y.Stock.portMgr.init();
     log("PortMgr: loaded");
 }, '1.0.0', {requires: ['node', 'yql', "substitute", "util", "mcap_history", "protocol", "QuoteManager"]});

@@ -1,0 +1,27 @@
+<div id="summary_container">
+	{#port}
+		{>portfolio_summary/}
+	{/port}
+</div>
+<ul class="tabs two_tabs">
+	<li class="viewPerformance tab first" view="viewPerformance" onclick=""><a>Gain/Loss</a></li><li class="viewPosition tab last" view="viewPosition" onclick=""><a>Position</a></li>
+</ul>
+<div id="stocks_container">
+{>portfolio_stocks_list/}
+</div>
+<div class="tip">*Turn your phone to landscape mode to display more info</div>
+<table class="buttons toolbar ">
+	<tr>
+		 <td><button class="pageLink flat_button edit_cash">Edit Cash Balance</button></td>
+		 <td><button class="pageLink flat_button rename">Rename</button></td>
+	</tr>
+	<tr>
+		 <td><button class="pageLink flat_button record_buy">Record a Buy</button></td>
+		 <td><button class="pageLink flat_button rename record_sell">Record a Sell</button></td>
+	</tr>
+	<tr>
+		 <td><button class="pageLink flat_button edit_positions">Edit Positions</button></td>
+		 <td><button class="pageLink flat_button delete_port">Delete Portfolio</button></td>
+	</tr>
+</table>
+<div class="chart hidden"><div class="content"></div></div>

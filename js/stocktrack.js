@@ -8,7 +8,7 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
     function bindUI() {
     	
         // TODO Move to news
-    	Y.delegate("click", function(e) {
+	   Y.delegate("click", function(e) {
             e.preventDefault();
             var root = e.currentTarget.ancestor(".news_container"),
             isMore = !root.hasClass("hide_extra_items"),
@@ -20,15 +20,30 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
                 node.setContent(text);
             
         }, "body", ".show_extra");
+	   
+	   Y.one(".exportHist").on("click", function() {
+		  var history = Y.Stock.History.getHistory(),
+		  portId, html = "";
+		  for(portId in history.year) {
+			 var port = portMgr.getPortfolio(portId);
+			 var exportHistory = { portfolio: port.name,
+						  record: history.year[portId]};
+			 html += JSON.stringify(exportHistory);
+		  }
+		  
+		  var myWin=window.open("","myWin");
+		  myWin.document.write('<!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01//EN""http://www.w3.org/TR/html4/strict.dtd">'+ 
+		  '<html><head><title>My Window</title></head><body>' + html + '</body></html>') 
+	   });
     	
-    	Y.Stock.util.hookEvent(".refresh_quotes", "click", function(e){
+	   Y.Stock.util.hookEvent(".refresh_quotes", "click", function(e){
 			e.preventDefault();
 			quoteMgr.refreshQuotes();
 		});
     
-    	//_util.hookEvent(".settings", "click", onShowSettingPage);
-    	// TODO move to Home.js
-    	Y.on("mUI_BeforePageChange", function(pageId) {
+	   //_util.hookEvent(".settings", "click", onShowSettingPage);
+	   // TODO move to Home.js
+	   Y.on("mUI_BeforePageChange", function(pageId) {
     	   if (pageId === "settings") {
     	       onShowSettingPage();
     	   }
@@ -76,7 +91,7 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
     		});
     	}
     	if (portMgr._state === "ready") {
-    		Y.one("#header").removeClass("hidden");
+			Y.one("#header").removeClass("hidden");
     		iui.showPageById("home");
     	}
     	else {
@@ -139,64 +154,46 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
             } 
         }
     }
-    function onShowSettingPage() { 
-        if (_util.getOrCreatePageNode("settings", templates["settings_page"]).created) {
-        	iui.showPageById("settings");
-        }
-    	// Hide settings and refresh
-    	Y.one(".toolbar .refresh_quotes").setStyle("display", "none");
-    	Y.one("#backButton").once("click", saveSettings);
-    	var html = [], i=0,
-    	portfolios = portMgr.getPortfolios(),
-    	port, 
-    	tempTogglePort = templates["settings_toggleShowHidePort"];
-    	
-    	// Initializing the show/hide porfolios toggle
-    	for (cur in portfolios) {
-    		port = portfolios[cur];
-    		if (port.id != "total")
-    			html[i++] = Y.Lang.substitute(tempTogglePort, { port_id: port.id, port_name: port.name, port_show: port.show ? "true" : "false"});				
-    	}
-    	Y.one("#settings .toggle_portfolio").setContent(html.join(''));
-    	
-    	Y.all("#settings .toggle").each(function(node) {
-    		var fieldName = node.getAttribute("name");
-    		if (fieldName)
-    			node.setAttribute("toggled", UI_SETTINGS[fieldName] ? "false" : "true");		
-    	});
-    	if (null == _settingsEventHandler) {
-	    	_settingsEventHandler = Y.one(".toggle_portfolio").delegate("settings|click", function(e) {
-	    		Y.use("edit_portfolio", function() {
-	    			var portId = e.currentTarget.getAttribute("port_id");
-	                Y.Stock.EditPort.render(portId);
-	                Y.later(100,  this, function() {
-	                    iui.showPageById("editPortfolio");
-	                }, false);
-	            });
-	    	}, "li");
-    	}
+    function onShowSettingPage() {
+	   var context = {portfolios: portMgr.getPortfolios(),
+				showGain: UI_SETTINGS.hideHomeSumGain ? "false" : "true",
+				showCash: UI_SETTINGS.hideHomeSumCash ? "false" : "true",
+				expandPositions: UI_SETTINGS.expandPositions ? "false" : "true"};
+	   dust.render("settings", context, function(err, out){
+		  Y.one("#settings").setContent(out);
+		  iui.showPageById("settings");
+	   });
+	   // Hide settings and refresh
+	   Y.one("#backButton").once("click", saveSettings);
     }
     function saveSettings() {	
-    	// Hide settings and refresh
-    	Y.all("#settings .toggle").each(function(node) {
-    		var fieldName = node.getAttribute("name"),
-    		curVal = node.getAttribute("toggled");
-    		UI_SETTINGS[fieldName] =  curVal === "false";
-    	});
-    	if (!UI_SETTINGS.hideHomeSumGain)
-    		Y.all(".hide_gain").removeClass("hide_gain");
-    	else {
-    		Y.all(".port_summary").addClass("hide_gain");
-    	}
-    	if (!UI_SETTINGS.hideHomeSumCash)
-    		Y.all(".hide_cash").removeClass("hide_cash");
-    	else {
-    		Y.all(".port_summary").addClass("hide_cash");
-    	}
-    	saveLocal("settings", UI_SETTINGS);
+	   // Hide settings and refresh
+	   Y.all("#settings .toggle").each(function(node) {
+		   var fieldName = node.getAttribute("name"),
+		   curVal = node.getAttribute("toggled");
+		   UI_SETTINGS[fieldName] =  curVal === "false";
+	   });
+	   if (!UI_SETTINGS.hideHomeSumGain)
+		   Y.all(".hide_gain").removeClass("hide_gain");
+	   else {
+		   Y.all(".port_summary").addClass("hide_gain");
+	   }
+	   if (!UI_SETTINGS.hideHomeSumCash)
+		   Y.all(".hide_cash").removeClass("hide_cash");
+	   else {
+		   Y.all(".port_summary").addClass("hide_cash");
+	   }
+	   saveLocal("settings", UI_SETTINGS);
     }
 
-    Y.Stock.home.render();
+    dust.render("main", {}, function(err, out){
+	   document.body.innerHTML = out;
+	   Y.Stock.home.render();
+	   bindUI();
+	   Y.all(".prerender_hidden").removeClass("prerender_hidden");
+	   Y.Stock.quoteMgr.init();
+	   Y.Stock.portMgr.init();
+    });
     /*
     if (portMgr.isInit()) {
         Y.Stock.home.render();
@@ -207,7 +204,5 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
         });
     }    */
 
-    bindUI();
-    Y.all(".prerender_hidden").removeClass("prerender_hidden");
     //quoteMgr.updateAllQuotesFromAccounts();
 });

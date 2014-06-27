@@ -240,13 +240,13 @@
                 				extractEquityInfo(quote.div[1], content, isEquity);  
                 			}
                 			else if (classes.match(/type_option/)) {
-                				extractOptionInfo(quote.div[1], content, sym);  
+                				//extractOptionInfo(quote.div[1], content, sym);  
                 			}
                 			else if (classes.match(/type_index/)) {
-                				extractIndexInfo(quote.div[1], content); 
+                				//extractIndexInfo(quote.div[1], content); 
                 			}
                 			else if (classes.match(/type_mutualfund/)) {
-                				extractMutualFundInfo(quote.div[1], content, sym); 
+                				//extractMutualFundInfo(quote.div[1], content, sym); 
                 			}
                 		} catch(err) {}
                 		                		    

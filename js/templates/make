@@ -1,0 +1,4 @@
+for file in markup/*.html
+do
+  dustc $file dust/$file.js
+done

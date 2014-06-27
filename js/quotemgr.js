@@ -65,48 +65,32 @@ YUI.add('QuoteManager', function (Y) {
         function isNumericField(field) {            
             return field == "price" || field == "change";
         }
-        _this.parseResults = function(results) {
-            var i=0, field=0, quotes = results;
-            if (!Y.Lang.isArray(quotes))
-                quotes = [results];
+        _this.parseResults = function(quotes) {
+            var i=0, field=0;
+            
             // Note: fork the process so it doens't block UI
             for (i in quotes) {
                 quote = quotes[i];
-                info = {};
-                for (field in quote) {
-                    if (isNumericField(field)) {
-                        if (quote[field]) {
-                            info[field] = parseFloat(quote[field]);
-                            // If the value isn't valid set it to 0
-                            if (!Y.Lang.isNumber(info[field])) {
-                            	info[field] = 0;
-                            }
-                        }
-                        else {
-                            info[field] = 0;
-                        }
-                    }
-                    else {
-                        info[field] = quote[field];
-                        //log("Quote info downloaded - " + field + ": " + info[field]);
-                    }
-                }               
-                _this.quotesInfo[info.symbol] = info;
+				if (!_this.quotesInfo[quote.symbol])
+					_this.quotesInfo[quote.symbol] = {};
+				info = _this.quotesInfo[quote.symbol];
+				for (field in quote)
+					info[field] = quote[field];
+				
             }   
         };
         
-        _this.onQueryResult = function(result) {
+        _this.onQueryResult = function(quotes) {
         	log("onQueryResult");
             var t=this;
-            if (result && result.query && result.query.results && result.query.results.quotes ) {               
-                t.parseResults(result.query.results.quotes.result);
+            if (quotes && quotes.length > 0) { 
                 _this.quoteDownloaded = true;
                 Y.Stock.portMgr.onQuotesInfoUpdated();
                 Y.fire('quotesInfoUpdated');
                 log("Quote info downloaded");
             }
             else {
-                log("Error in query for stock quote " + result);
+                log("Error in query for stock quote " + quotes);
             }
             t.updatingQuote = false;
             if (t.refreshQuotesAgain) {
@@ -115,7 +99,7 @@ YUI.add('QuoteManager', function (Y) {
             }
         };
         _this.onNewsQueryResult = function(results) {
-                Y.fire('newsDownloaded', results);
+            Y.fire('newsDownloaded', results);
         };
         _this.queryForNews = function(stocks, callback) {
         	if (stocks) {
@@ -130,19 +114,11 @@ YUI.add('QuoteManager', function (Y) {
         	}
         	return false;
         };
-        _this.queryForTopNews = function(callback) {
-            query = 'select * from rss where url="http://hosted.ap.org/lineups/BUSINESSHEADS-rss_2.0.xml?SITE=NHPOR&SECTION=HOME"';
-            return Y.YQL(query, {
-            		allowCache: false,
-                    on: {
-                        success: callback
-                    }
-            });
-        };
+        
         function addStock(stocks, sym, stocksAdded) {
-        	if (sym === "^DJI") {
+        	/*if (sym === "^DJI") {
         		sym = "INDU";	// rename dow jones due to a legal restriction from yahoo API
-        	}
+        	}*/
         	if (!stocksAdded[sym]) {
         		stocks.push(sym.charAt(0) === "^" ? ("%5E" + sym.slice(1)) : sym);
         		stocksAdded[sym] = true;
@@ -169,53 +145,40 @@ YUI.add('QuoteManager', function (Y) {
             };
         };
         _this.getAllNews = function() {
-            var t = this, info = t.getStockList(),
-            stockList = info.stocks.join(',');
-            t.yqlNewsQuery = t.queryForNews(stockList, t.onNewsQueryResult);
-            log("New query for news");
+			Y.fire('newsDownloaded', this.news);
         };
-        _this.getYqlQuery = function() {
-            var t=this, query, url;
-            if (t.yqlQuery === null) {              
-                info = t.getStockList();
-                if (info.options.length > 0 || info.stocks.length > 0) {
-                	url = window.location.host + window.location.pathname;
-                	if (url === "localhost:8080/stock/") {
-                		url = "www.jimming.com/money/";
-                	}
-                	query = ['use "http://', url, 'yahoo.finance.scrapper.new.xml" as MyTable; select * from MyTable where symbol in ("',         
-                       	         info.stocks.join('","'), ",", info.options.join(","), '")'].join('');
-                
-                    log("New query for quotes: " + query);
-                    t.yqlQuery = Y.YQL(query, {
-                		allowCache: false,
-                        on: {
-                            success: Y.bind(t.onQueryResult, t),
-                            failure: Y.bind(t.onQueryResult, t)
-                        },
-                        timeout: 50000
-                    });
-                }
-                else {
-                    _this.quoteDownloaded = true;
-                    // if there isn't any quotes to retrieve just fire update now
-                    Y.fire('quotesInfoUpdated');    // TODO: may need to rework this so it's more logic in a design sense
-                }
-            }
-            return t.yqlQuery;
-        };
+		_this.downloadQuotes = function() {
+			var t=this, query, url, yqlQuery;   
+			info = t.getStockList();
+			
+			if (info.options.length > 0 || info.stocks.length > 0) {
+				var downloaded = 0;
+				Stock.Downloader.setCallback(function(results) {
+					t.parseResults(results.quotes);
+					downloaded++;
+					if (downloaded >= 2) {
+						t.onQueryResult(results.quotes);
+					}
+					if (results.news.length > 0) {
+						t.news = results.news;
+						Y.fire('newsDownloaded', this.news);
+					}
+				});
+				Stock.Downloader.downloadRTQuotes(info);
+				Stock.Downloader.downloadDetailedQuotes(info);
+			}
+			else {
+				_this.quoteDownloaded = true;
+				// if there isn't any quotes to retrieve just fire update now
+				Y.fire('quotesInfoUpdated');    // TODO: may need to rework this so it's more logic in a design sense
+			}
+		}
         _this.refreshQuotes = function(rebuildQuery) {
             var t=this;
             // Make sure we are not already updating
             if (t.updatingQuote !== true) {
-                if (t.yqlQuery && true !== rebuildQuery) {
-                    log("Querying quotes using a cached YQL query");
-                    t.yqlQuery.send();
-                }
-                else {
-                    log("Requesting a new query");
-                    t.getYqlQuery();
-                }
+                t.downloadQuotes();
+				//t.getYqlQuery();
                 t.updatingQuote = true;
                 t.animateRefreshBtn();
                 // Reset the flag after 5 seconds
@@ -236,7 +199,8 @@ YUI.add('QuoteManager', function (Y) {
                 t.yqlNewsQuery.send();
             }
             else {
-                t.getYqlQuery();
+				t.downloadQuotes();
+                //t.getYqlQuery();
             }
         };
         _this.onPortfolioContentChanged = function(port) {
@@ -322,6 +286,5 @@ YUI.add('QuoteManager', function (Y) {
     };
 
     Y.Stock.quoteMgr = new QuoteManager();
-    Y.Stock.quoteMgr.init();
     log("QuoteMgr: loaded");
 }, '1.0.0', {requires: ['node', 'yql', "substitute", "util", "mcap_history", "protocol"]});

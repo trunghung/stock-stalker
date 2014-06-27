@@ -45,7 +45,9 @@ VIEWS = { /*"viewQuote" : {       name: "Quote",
                                          '<th class="header title info double" colspan="2">Day\'s Change</th>',
                                          '<th class="header title info double landscape_col" colspan="2">Market Value & Gain</th></tr>'].join(''),
                                 columns: {'symbol' : { },  'price' : { },  'change' : { },  'percent-change' : { },  
-                                    'value-delta' : { },  'market-value' : { landscape: true },  'gain' : { landscape: true }}
+                                    'value-delta' : { },  'market-value' : { landscape: true },  'gain' : { landscape: true }},
+						  tags: ['symbol', 'price', 'change', 'percent-change', 'value-delta', 'market-value', 'gain'],
+						  landscapeTags: {'market-value': true, 'gain': true}
                             },
             "viewPosition" : 
                             {   name: "Positions",
@@ -56,7 +58,9 @@ VIEWS = { /*"viewQuote" : {       name: "Quote",
                                          '<th class="header title info">Value</th>',
                                          '<th class="header title info landscape_col">Position</th></tr>'].join(''),                                
                                 columns: {'symbol' : { },  'shares' : { }, 'gain' : { },  'gain-percent' : { },  
-                                          'market-value' : { },  'pf-percent' : { landscape: true } }
+                                          'market-value' : { },  'pf-percent' : { landscape: true } },
+						  tags: ['symbol', 'shares', 'gain', 'gain-percent', 'market-value', 'pf-percent'],
+						  landscapeTags: {'pf-percent': true}
                             }
 },
 
@@ -87,7 +91,7 @@ YUI_Config = {
                     //root: '2.8.0r4/build/',
                     modules:  {
                         iui: {
-                            path: 'iui/iuix.js',
+                            path: 'iui/iui.js',
                             requires: ["mUI", "iui_css", "default_theme_css", "default_theme_css"]
                         },
                         iui_css: {
