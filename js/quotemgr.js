@@ -147,12 +147,13 @@ YUI.add('QuoteManager', function (Y) {
         _this.getAllNews = function() {
 			Y.fire('newsDownloaded', this.news);
         };
+		var _lastFullFetch = 0;
 		_this.downloadQuotes = function() {
 			var t=this, query, url, yqlQuery;   
 			info = t.getStockList();
 			
 			if (info.options.length > 0 || info.stocks.length > 0) {
-				var downloaded = 0;
+				var downloaded = 1;
 				Stock.Downloader.setCallback(function(results) {
 					t.parseResults(results.quotes);
 					downloaded++;
@@ -165,7 +166,12 @@ YUI.add('QuoteManager', function (Y) {
 					}
 				});
 				Stock.Downloader.downloadRTQuotes(info);
-				Stock.Downloader.downloadDetailedQuotes(info);
+				// do a full fetch once an hour
+				if (!_lastFullFetch || (new Date()).getTime() - _lastFullFetch.getTime() > 3600000) {
+					_lastFullFetch = new Date();
+					downloaded = 0;
+					Stock.Downloader.downloadDetailedQuotes(info);
+				}
 			}
 			else {
 				_this.quoteDownloaded = true;
@@ -182,7 +188,7 @@ YUI.add('QuoteManager', function (Y) {
                 t.updatingQuote = true;
                 t.animateRefreshBtn();
                 // Reset the flag after 5 seconds
-                Y.later(5000, t, function() {
+                Y.later(10000, t, function() {
                 	this.updatingQuote = false;
                 });
             }

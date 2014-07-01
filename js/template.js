@@ -103,25 +103,6 @@ var templates = {
 						    '<button class="delete redbutton edit">Sell Position</button>',
 						'</fieldset>'
                            ].join(""),
-	"position_item_container" : [
-	         		   '<table class="positions_root" portId="{port_id}">',
-					        '<tr class="row">',
-					            '<th class="">Shares</td>',
-					            '<th class="">Paid</td>',
-					            '<th class="landscape_col">Portfolio</td>',
-					            '<th class="">Date</td>',
-					        '</tr>',
-					        '{lots}',
-				        '</table>',
-	            ].join(""),
-    "position_item" : [
-		            '<tr class="row position_item" positionId="{id}">',
-		                '<td class="value shares">{shares}</td>',
-		                '<td class="value price">${buy}</td>',
-		                '<td class="value date landscape_col">{port_name}</td>',
-		                '<td class="value date forward">{date}</td>',
-		            '</tr>'
-		            ].join(""),	
     "position_item_edit" : [
 		            '<tr class="row position_item" positionId="{id}">',
 	                	'<td class="icon"><a class="delete" onclick=""></a></td>',

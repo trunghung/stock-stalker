@@ -8,6 +8,7 @@ YUI.add('view_stock', function (Y) {
         _mUI = Y.mUI,
         _stock = null, 
         _portId = null,
+		_curView = "viewQuote",
         _positionId = null,
         _root = null,
         _positionTabInited = false,
@@ -19,16 +20,79 @@ YUI.add('view_stock', function (Y) {
             log("view_stock: show stock info: " + stock);
             var info = _util.getOrCreatePageNode("view_stock", view_stock_page);
             _root = info.node;
-            Y.later(0, this, createMarkup, false);
+			
+			info = _quoteMgr.getAllInfo(_stock);
+			if (info.type == "equity" && !info.earningsDate) {
+				Stock.Downloader.downloadSingleQuote(_stock, function(quote) {
+					_quoteMgr.parseResults([quote]);
+					createMarkup();
+				});
+			}
+			Y.later(0, this, createMarkup, false);
+            
         },
         _onNewsFeedDownloaded = function(results) {
 			if (results.query && results.query.results.item)
 				Y.Stock.News.parseReceivedNewsFeed(_root.one(".news_container"), 4, results.query.results.item);
         },
         createMarkup = function() {
-            var info = getInfo();
+            function getLots(portId, symbol) {
+				var port = _portMgr.getPortfolio(portId), index, i, position,
+				positions = [];
+				for (i in _portMgr.portfolios) {
+					curPort = _portMgr.portfolios[i];
+					// If it is aggregated port, we get the original port name
+					if (curPort.id != "total" && curPort.name != "Watchlist" && (portId == "total" || curPort.id == portId)) {
+						for (index in curPort.content) {
+							lot = curPort.content[index];
+							if (lot.symbol == symbol) {
+								position = {
+									id: lot.id,
+									symbol: lot.symbol, 
+									buy: formatTagValue(lot.buy, "price"),
+									paid: lot.buy,
+									shares: lot.shares,
+									port_name: curPort.name || ""
+								}
+								positions.push(position);
+							}
+						}
+					}
+				}
+				return positions;
+			}
             if (_root) {
-                _root.setContent(Y.Lang.substitute(template_view_stock, info));
+				var helpers = {
+					totalShares: function(chunk, context) {
+						var symbol = context.get("symbol"),
+							positionInfo = _portMgr.getShareCount(symbol, _portId);
+                        return positionInfo.shares;
+					},
+					positive: function(chunk, context) {
+						return context.get("change") < 0 ? "negative" : "positive";
+					},
+					gain: function(chunk, context) {
+						var shares = context.get("shares"),
+						paid = context.get("paid"),
+						symbol = context.get("symbol");
+						return formatTagValue(shares * (_quoteMgr.getInfo(symbol, 'price') - paid), "gain");
+					},
+					marketVal: function(chunk, context) {
+						var shares = context.get("shares");
+						var shares = context.get("shares"),
+						symbol = context.get("symbol");
+						return formatTagValue(shares * _quoteMgr.getInfo(symbol, 'price'), "market-value");
+					}
+				}
+				var context = {
+					quote: _quoteMgr.getAllInfo(_stock),
+					lots: getLots(_portId, _stock)
+				};
+				Stock.Template.renderInto("view_stock", context, _root._node, helpers);
+				
+				// Set the correct view
+				_setActiveTab(_root.one(".nav_tabs"), _curView);
+				
                 _quoteMgr.queryForNews(_stock, _onNewsFeedDownloaded);   // Show only 4 news headlines initially
                 // OPTIMIZE: we can try to do once per portfolio view
                 _root.setAttribute("button", _portId === "total" ? "" : "edit_btn");
@@ -95,44 +159,9 @@ YUI.add('view_stock', function (Y) {
                 if (view === "viewChart") {
                 	_setChartRange("5d");
                 }
-                else if (view === "viewLots") {
-                	_changeLotContent(_portId);
-                }
+				_curView = view;
             }
-        },
-        _generateLotMarkup = function(lots, portName, templateId) {
-        	var index=0, lot, params, html = [];
-        	for (index in lots) {          
-        		lot = lots[index];
-        		if (lot.symbol == _stock) {
-        			params = {
-        					id: lot.id,
-        					symbol: lot.symbol, 
-        					buy: formatTagValue(lot.buy, "price"),
-        					shares: lot.shares,
-        					date: lot.date || "",
-        					port_name: portName || ""
-        					};
-        			html.push(Y.Lang.substitute(templates[templateId], params));
-        		}
-            }
-        	return html.join("");
-        },
-        _changeLotContent = function(portId) {
-        	var port = _portMgr.getPortfolio(portId), 
-        	params, htmlLots=[];
-        	if (port) {            	
-            	htmlLots = _generateLotMarkup(port.content, port.name, "position_item");
-        		params = {
-        				port_id: port.id, 
-        				port_name: port.name,
-        				lots: htmlLots
-        				};
-        		html = Y.Lang.substitute(templates["position_item_container"], params);
-            	
-            }
-        	_root.one(".viewLots .lots .content").setContent(html);
-        },
+        }
         _setActiveTab = function(root, view) {
             var nodeNew = root.one(['.', view].join("")),
             nodeCur = root.all('.active'),
@@ -144,23 +173,6 @@ YUI.add('view_stock', function (Y) {
                 nodeNew.addClass("active");
             if (newTab)
             	newTab.addClass("active");            
-        },
-        getInfo = function() {
-            var i=0, field, info = _quoteMgr.getAllInfo(_stock),
-            requiredFields = ["shares", "eps", "pe", "year_hi", "year_lo", "day_hi", "day_lo", "open", "MCap", "bid", "ask", 
-                              "price", "change", "percent-change", "vol", "positive", "symbol", "name"],
-            positionInfo = _portMgr.getShareCount(_stock, _portId);
-            info.total_shares = positionInfo.shares;
-            info.lots_count = positionInfo.lots.length;
-            info.tabs_count = "four_tabs"; //info.lots_count > 1 ? "four_tabs" : "three_tabs";
-            info.show_lots = "";//info.lots_count > 1 ? "" : "hidden";
-                        
-            info.positive = info.change < 0 ? "negative" : "positive";
-            for (i in requiredFields) {
-                field = requiredFields[i];
-                info[field] = formatTagValue(info[field], field) || "N/A";
-            }
-            return info;
         };
         return {
                 render: _render,

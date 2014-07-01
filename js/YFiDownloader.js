@@ -23,132 +23,134 @@
 		}
 		return ret;
 	}
-	function parseDetailedView(response) {
-		var t=this,
-		quotes = [];
-		  
+	function convertToDom(response) {
+		var el = document.createElement("DIV");
 		if (response && response.query && response.query.results && response.query.results.html) {
-			var el = document.createElement("DIV"), range, change;
-			el.innerHTML = response.query.results.html.replace(/[\n]/g, "");
+			el.innerHTML = response.query.results.html.replace(/[\n]/g, "").replace(/<img/g,"<img2");	// neuter all the image tags
+		}
+		return el;
+	}
+	function parseDetailedView(response) {
+		var quotes = [], range, change,
+		el = convertToDom(response);
 			
-			var entries = el.querySelectorAll(".yfi_summary_table");
-			for (var i=0; i < entries.length; i++) {
-				entry = entries[i];
-				var quote = {};
-				quote.name = entry.querySelector(".hd h2").innerText;
-				var symbol = entry.querySelector(".hd p").innerText.replace(/[ ,(,)]/g, "").split(":");
-				quote.symbol = symbol[1];
-				if (symbol[0])
-					quote.xchange = symbol[0];
-				if (entry.classList.contains("type_index")) {
-					var info = entry.querySelectorAll(".bd tr td");
-					if (info.length == 7) {
-						// 0 - price
-						//quote.price = parseFloat(info[0].innerText.replace(/,/g, ""));
-						// 1 - trade time
-						// 2 - change
-						//change = parseChange(info[2].innerText);
-						//quote.change = change.change;
-						//quote["percent-change"] = change.percent;
-						
-						// 3 - prev_close
-						quote.prev_close = parseFloat(info[3].innerText.replace(/,/g, ""));
-						
-						// 4 - open                			
-						quote.open = parseFloat(info[4].innerText.replace(/,/g, ""));
+		var entries = el.querySelectorAll(".yfi_summary_table");
+		for (var i=0; i < entries.length; i++) {
+			entry = entries[i];
+			var quote = {};
+			quote.name = entry.querySelector(".hd h2").innerText;
+			var symbol = entry.querySelector(".hd p").innerText.replace(/[ ,(,)]/g, "").split(":");
+			quote.symbol = symbol[1];
+			if (symbol[0])
+				quote.xchange = symbol[0];
+			if (entry.classList.contains("type_index")) {
+				var info = entry.querySelectorAll(".bd tr td");
+				if (info.length == 7) {
+					// 0 - price
+					//quote.price = parseFloat(info[0].innerText.replace(/,/g, ""));
+					// 1 - trade time
+					// 2 - change
+					//change = parseChange(info[2].innerText);
+					//quote.change = change.change;
+					//quote["percent-change"] = change.percent;
 					
-						// 5 - day range
-						range = parseRange(info[5].innerText);
-						quote.day_lo = range.low;
-						quote.day_hi = range.high;
-						
-						// 6 - yrRange
-						quote.yrRange = info[6].innerText.replace(/[ ,\,]/g, "");
-					}
-				}
-				else if (entry.classList.contains("type_mutualfund")) {
-					var info = entry.querySelectorAll(".bd tr td");
-					if (info.length == 5) {
-						//quote.price = parseFloat(info[0].innerText.replace(/,/g, ""));
-						quote.prev_close = quote.price;
-						// 3 - YTD return
-						quote.ytdRet = parseFloat(info[3].innerText.replace(/,/g, ""));
-						// 4 - Yield ttm
-						quote.yield = parseFloat(info[4].innerText.replace(/,/g, ""));
-						if (entry.classList.contains("type_etf"))
-							quote.type = "ETF";
-						else if (entry.classList.contains("type_mutualfund"))
-							quote.type = "MF";
-					}
-				}
-				else if (entry.classList.contains("type_equity") || entry.classList.contains("type_etf")) {
-					var isETF = entry.classList.contains("type_etf");
-					var info = entry.querySelectorAll(".bd tr td");
-					if (info.length == 16) {
-						//quote.price = parseFloat(info[0].innerText.replace(/,/g, ""));
-						
-						range = parseRange(info[1].innerText);
-						quote.day_lo = range.low;
-						quote.day_hi = range.high;
-						quote.type = "equity";
-						
-						range = parseRange(info[3].innerText);
-						quote.year_lo = range.low;
-						quote.year_hi = range.high;
-						
-						//change = parseChange(info[4].innerText);
-						//quote.change = change.change;
-						//quote["percent-change"] = change.percent;
-						
-						quote.vol = parseFloat(info[5].innerText);
-						
-						quote.prev_close = parseFloat(info[6].innerText.replace(/,/g, ""));
-						quote.open = parseFloat(info[8].innerText.replace(/,/g, ""));
-						
-						quote.bid = parseFloat(info[10].innerText.split("x")[0]);
-						quote.ask = parseFloat(info[12].innerText.split("x")[0]);
-						
-						if (!isETF) {
-							quote.MCap = info[9].innerText.trim();
-							quote.pe = parseFloat(info[11].innerText.replace(/,/g, ""));
-							quote.eps = parseFloat(info[13].innerText.replace(/,/g, ""));
-							quote.YrTarEst = parseFloat(info[14].innerText.replace(/,/g, ""));
-							change = parseChange(info[15].innerText);
-							quote.dividend = change.change;
-							quote.yield = change.percent;
-						}
-						else {
-							quote.ytdRet = parseFloat(info[9].innerText.replace(/,/g, ""));
-							quote.nav = parseFloat(info[14].innerText.replace(/,/g, ""));
-							quote.yield = parseFloat(info[15].innerText);
-						}
-					}
-				}
-				else if (entry.classList.contains("type_option")) {
-					var info = entry.querySelectorAll(".bd tr td");
-					if (info.length == 8) {
-						// No price returned here
-						
-						range = parseRange(info[3].innerText);
-						quote.day_lo = range.low;
-						quote.day_hi = range.high;
-						quote.type = "option";
-																
-						quote.vol = parseFloat(info[4].innerText);
-						
-						quote.prev_close = parseFloat(info[2].innerText.replace(/,/g, ""));
-						quote.open = parseFloat(info[1].innerText.replace(/,/g, ""));
-						
-						quote.expiration = info[7].innerText.replace(/[ ,\,]/g, "");
-						quote.strike = parseFloat(info[6].innerText.replace(/,/g, ""));
-					}
-				}
-				else {
+					// 3 - prev_close
+					quote.prev_close = parseFloat(info[3].innerText.replace(/,/g, ""));
 					
+					// 4 - open                			
+					quote.open = parseFloat(info[4].innerText.replace(/,/g, ""));
+				
+					// 5 - day range
+					range = parseRange(info[5].innerText);
+					quote.day_lo = range.low;
+					quote.day_hi = range.high;
+					
+					// 6 - yrRange
+					quote.yrRange = info[6].innerText.replace(/[ ,\,]/g, "");
 				}
-				console.log("Parsed quote result: " + JSON.stringify(quote));
-				quotes.push(quote);
 			}
+			else if (entry.classList.contains("type_mutualfund")) {
+				var info = entry.querySelectorAll(".bd tr td");
+				if (info.length == 5) {
+					//quote.price = parseFloat(info[0].innerText.replace(/,/g, ""));
+					quote.prev_close = quote.price;
+					// 3 - YTD return
+					quote.ytdRet = parseFloat(info[3].innerText.replace(/,/g, ""));
+					// 4 - Yield ttm
+					quote.yield = parseFloat(info[4].innerText.replace(/,/g, ""));
+					if (entry.classList.contains("type_etf"))
+						quote.type = "ETF";
+					else if (entry.classList.contains("type_mutualfund"))
+						quote.type = "MF";
+				}
+			}
+			else if (entry.classList.contains("type_equity") || entry.classList.contains("type_etf")) {
+				var isETF = entry.classList.contains("type_etf");
+				var info = entry.querySelectorAll(".bd tr td");
+				if (info.length == 16) {
+					//quote.price = parseFloat(info[0].innerText.replace(/,/g, ""));
+					
+					range = parseRange(info[1].innerText);
+					quote.day_lo = range.low;
+					quote.day_hi = range.high;
+					quote.type = "equity";
+					
+					range = parseRange(info[3].innerText);
+					quote.year_lo = range.low;
+					quote.year_hi = range.high;
+					
+					//change = parseChange(info[4].innerText);
+					//quote.change = change.change;
+					//quote["percent-change"] = change.percent;
+					
+					quote.vol = parseFloat(info[5].innerText);
+					
+					quote.prev_close = parseFloat(info[6].innerText.replace(/,/g, ""));
+					quote.open = parseFloat(info[8].innerText.replace(/,/g, ""));
+					
+					quote.bid = parseFloat(info[10].innerText.split("x")[0]);
+					quote.ask = parseFloat(info[12].innerText.split("x")[0]);
+					
+					if (!isETF) {
+						quote.MCap = info[9].innerText.trim();
+						quote.pe = parseFloat(info[11].innerText.replace(/,/g, ""));
+						quote.eps = parseFloat(info[13].innerText.replace(/,/g, ""));
+						quote.YrTarEst = parseFloat(info[14].innerText.replace(/,/g, ""));
+						change = parseChange(info[15].innerText);
+						quote.dividend = change.change;
+						quote.yield = change.percent;
+					}
+					else {
+						quote.ytdRet = parseFloat(info[9].innerText.replace(/,/g, ""));
+						quote.nav = parseFloat(info[14].innerText.replace(/,/g, ""));
+						quote.yield = parseFloat(info[15].innerText);
+					}
+				}
+			}
+			else if (entry.classList.contains("type_option")) {
+				var info = entry.querySelectorAll(".bd tr td");
+				if (info.length == 8) {
+					// No price returned here
+					
+					range = parseRange(info[3].innerText);
+					quote.day_lo = range.low;
+					quote.day_hi = range.high;
+					quote.type = "option";
+															
+					quote.vol = parseFloat(info[4].innerText);
+					
+					quote.prev_close = parseFloat(info[2].innerText.replace(/,/g, ""));
+					quote.open = parseFloat(info[1].innerText.replace(/,/g, ""));
+					
+					quote.expiration = info[7].innerText.replace(/[ ,\,]/g, "");
+					quote.strike = parseFloat(info[6].innerText.replace(/,/g, ""));
+				}
+			}
+			else {
+				
+			}
+			console.log("Parsed quote result: " + JSON.stringify(quote));
+			quotes.push(quote);
 		}
 		return { quotes: quotes, news: []};
 	}
@@ -185,52 +187,74 @@
 		return news;
 	}
 	function parseRTView(response) {
-		var quotes = [], news = [];
-		  
-		if (response && response.query && response.query.results && response.query.results.html) {
-			var el = document.createElement("DIV"), range, change, info;
-			el.innerHTML = response.query.results.html.replace(/[\n]/g, "");
-			news = parseNews(el);
-			var entries = el.querySelectorAll("table.yfi_portfolios_multiquote tr");
-			for (var i=0; i < entries.length; i++) {
-				entry = entries[i];
-				var quote = {};
-				info = entry.querySelector("td.col-symbol a");
-				if (!info) {
-					if (i > 0)	// First line is the header
-						console.log("Quote not found: " + entry.innerText.replace(/  /g, ""));
-					continue;
-				}
-				
-				quote.symbol = info.innerText;
-								
-				info = entry.querySelector("td.col-price");
-				if (info) quote.price = parseFloat(info.innerText.replace(/,/g, ""));
-				
-				info = entry.querySelector("td.col-change");
-				if (info) quote.change = parseFloat(info.innerText.replace(/,/g, ""));
-				
-				info = entry.querySelector("td.col-percent_change");
-				if (info) quote["percent-change"] = parseFloat(info.innerText.replace(/,/g, ""));
-								
-				console.log("Parsed quote result: " + JSON.stringify(quote));
-				quotes.push(quote);
+		var quotes = [], news = [], range, change, info, quote,
+		el = convertToDom(response);
+		
+		news = parseNews(el);
+		var entries = el.querySelectorAll("table.yfi_portfolios_multiquote tr");
+		for (var i=0; i < entries.length; i++) {
+			entry = entries[i];
+			quote = {};
+			info = entry.querySelector("td.col-symbol a");
+			if (!info) {
+				if (i > 0)	// First line is the header
+					console.log("Quote not found: " + entry.innerText.replace(/  /g, ""));
+				continue;
 			}
+			
+			quote.symbol = info.innerText;
+							
+			info = entry.querySelector("td.col-price");
+			if (info) quote.price = parseFloat(info.innerText.replace(/,/g, ""));
+			
+			info = entry.querySelector("td.col-change");
+			if (info) quote.change = parseFloat(info.innerText.replace(/,/g, ""));
+			
+			info = entry.querySelector("td.col-percent_change");
+			if (info) quote["percent-change"] = parseFloat(info.innerText.replace(/,/g, ""));
+							
+			console.log("Parsed quote result: " + JSON.stringify(quote));
+			quotes.push(quote);
 		}
 		return {quotes: quotes, news: news};
 	}
-	
-	function parseSingleQuoteView(response) {
-		if (response && response.query && response.query.results && response.query.results.html) {
-			var el = document.createElement("DIV"), range, change, info;
-			el.innerHTML = response.query.results.html.replace(/[\n]/g, "");
-			news = parseNews(el);
-			
-			console.log("Parsed quote result: " + JSON.stringify(quote));
+	// sample
+	// ETF: IVV, OPTIONS: yhoo150117c00025000, MF: fcntx
+	function parseSingleQuoteView(ticker, response) {
+		var quotes = [], range, change, info, quote = { symbol: ticker.toUpperCase()}, elInfo,
+		elRoot = convertToDom(response), el;
+		
+		el = elRoot.querySelector("#yfi_investing_content .yfi_rt_quote_summary");
+		elInfo = el.querySelector(".time_rtq_ticker span");
+		if (elInfo) quote.price = parseFloat(elInfo.innerText.replace(/,/g, ""));
+		
+		elInfo = el.querySelector(".time_rtq_content");
+		if (elInfo) {
+			change = parseChange(elInfo.innerText.replace(/,/g, ""));
+			quote.change = change.change;
+			quote["percent-change"] = change.percent;
 		}
 		
-		return {quote: quote, news: news};
+		// extract AH prices
+		elInfo = el.querySelector("#yfs_l86_" + ticker);
+		if (elInfo) quote.priceAH = parseFloat(elInfo.innerText.replace(/,/g, ""));
+		elInfo = el.querySelector("#yfs_c85_" + ticker);
+		if (elInfo) quote.changeAH = parseFloat(elInfo.innerText.replace(/[ ,\,]/g, ""));
+		elInfo = el.querySelector("#yfs_c86_" + ticker);
+		if (elInfo) quote.percent_changeAH = parseFloat(elInfo.innerText.replace(/[(,),\,%]/g, ""));
+		
+		el = elRoot.querySelectorAll("#yfi_investing_content .yfi_quote_summary tr");
+		// Equity
+		if (el.length == 15) {
+			if (el[6].innerText.indexOf("Earnings") != -1) {
+				quote.earningsDate = el[6].querySelector("td").innerText.trim();
+			}
+		}		
+		
+		console.log("Parsed single quote result: " + JSON.stringify(quote));
+		return quote;
 	}
+	
 	function requestFile(url, callbackFn) {
 		var xmlhttp=new XMLHttpRequest();
 		xmlhttp.onreadystatechange=function() {
@@ -286,6 +310,7 @@
 		}
 	}
 	function downloadSingleQuote(ticker, cb) {
+		ticker = ticker.toLowerCase();
 		console.log("downloadSingleQuote for " + ticker);
 		var query, url; 
 		url = window.location.host + window.location.pathname;
@@ -297,7 +322,7 @@
 		url = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query) + "&format=json&rand=" + (new Date()).getTime();
 		requestFile(url, {
 				success: function(response) {
-					var quote = parseSingleQuoteView(JSON.parse(response));
+					var quote = parseSingleQuoteView(ticker, JSON.parse(response));
 					//onQuotesDownloadedCB && onQuotesDownloadedCB([quote]);
 					cb && cb(quote);
 				}
