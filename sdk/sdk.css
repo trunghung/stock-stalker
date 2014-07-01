@@ -112,7 +112,7 @@ ul.tabs li.row {
     overflow: hidden;
 }
 .arrow, .arrow a.active , li.arrow{
-    background-image: url("http://www.jimming.com/money/res/img/chevron.png");
+    background-image: url("http://pair.jimming.com/money/res/img/chevron.png");
     background-position: right center;
     background-repeat: no-repeat;
     padding-right: 30px;
@@ -120,7 +120,7 @@ ul.tabs li.row {
     padding-bottom: 8px; 
 }
 .forward, .forward a.active, li.forward {
-    background-image: url("http://www.jimming.com/money/res/img/chevron_circle.png");
+    background-image: url("http://pair.jimming.com/money/res/img/chevron_circle.png");
     background-position: right center;
     background-repeat: no-repeat;
     padding-right: 40px;
