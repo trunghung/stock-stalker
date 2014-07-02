@@ -6,6 +6,7 @@ YUI.add('home', function (Y) {
         _root = null,
         _prefetching = true,
         _isPortrait = -1,
+		_earningsRequested = false,
         _chartDrawPending = false,
         _lastTopNewsUpdatedTime = -1,
 	_curView = "viewHome",
@@ -55,13 +56,11 @@ YUI.add('home', function (Y) {
             return _root.one(['#portfolio_summaries .port_summary[port_id="', port_id,'"]'].join(''));
         },
         _initFeatureBlock = function(slot, symbol, shares, name, noPrefix) {
-		  dust.render("feature_block", {symbol: symbol, shares: shares, name: name.substr(0, 10), noPrefix: noPrefix===true ? "true" : "false"}, function(err, out){
-			 var node = _root.one(".feature_blocks .slot_" + slot);
-			 if (node) {
-				node.setContent(out);
-			 }
-		  });
-        	
+			Stock.Template.renderInto("feature_block", {symbol: symbol,
+									  shares: shares,
+									  name: name.substr(0, 10),
+									  noPrefix: noPrefix===true ? "true" : "false"},
+									  _root.one(".feature_blocks .slot_" + slot)._node);
         },
         _renderFeatureBlocks = function() {
 	        _initFeatureBlock(0, UI_SETTINGS.indices[0], 1, INDICES[UI_SETTINGS.indices[0]], true);
@@ -97,6 +96,46 @@ YUI.add('home', function (Y) {
             });
         	
         },
+		_renderEarningsCalendar = function(count) {
+			var quote;
+			if (!count) count = 0;
+			for (sym in Y.Stock.quoteMgr.quotesInfo) {
+				quote = Y.Stock.quoteMgr.quotesInfo[sym];
+				if (count > 2) break;	// download 3 each time
+				if (quote.type == "equity") {
+					if (!quote.earningsDate) {
+						Stock.Downloader.downloadSingleQuote(quote.symbol, function(quote) {
+							if (quote) {
+								Y.Stock.quoteMgr.parseResults([quote]);
+								_renderEarningsCalendar(count+1);
+							}
+						});
+						break;
+					}
+				}
+			}
+			
+			var context = {}, sym, quote, quotes = [];
+			for (sym in Y.Stock.quoteMgr.quotesInfo) {
+				quote = Y.Stock.quoteMgr.quotesInfo[sym];
+				// Only show the next 2 weeks 
+				if (quote.earningsDate && quote.earningsDateObj &&
+					quote.earningsDateObj.getTime() - (new Date()).getTime() < 1209600000) {
+					quotes.push(quote);
+				}
+			}
+			quotes.sort(function(a, b) {
+				if (a.earningsDateObj && b.earningsDateObj) {
+					return a.earningsDateObj.getTime() > b.earningsDateObj.getTime() ? 1 : -1;
+				}
+				return 1;
+			});
+			
+			if (quotes.length > 0)
+				context.earnings = quotes;
+			
+			Stock.Template.renderInto("earnings_cal", context, _root.one(".earnings-cal")._node);
+		}
         _updatePortfolioSummaryBlocks = function() {
         	var portfolios = Y.Stock.portMgr.getPortfolios(), cur=0;
         	for (cur in portfolios) {
@@ -108,29 +147,30 @@ YUI.add('home', function (Y) {
             positions.sort(_util.stockSortFuncByChange),
             len = positions.length,
             position = positions[0],
-	    defaultDelay = _util.isPageActive(_pageId) ? 10 : 500,
-	    updateDelayHome = (_curView == "viewHome") ? 10 : defaultDelay,
-	    updateDelayNews = (_curView == "viewNews") ? 10 : defaultDelay,
-	    updateDelayPortfolios = (_curView == "viewPortfolios") ? 0 : defaultDelay;
-	    Y.later(updateDelayHome, this, function() {
-		// Immediately update the component that is active
-		_initFeatureBlock(2, position.symbol, position.shares, position.symbol);
-		if (len >= 2) {
-		    position = positions[1];
-		    _initFeatureBlock(3, position.symbol, position.shares, position.symbol);
-		}
-		if (len >= 4) {
-		    position = positions[2];
-		    _initFeatureBlock(4, position.symbol, position.shares, position.symbol);
-		}
-		if (len >= 4) {
-		    position = positions[3];
-		    _initFeatureBlock(5, position.symbol, position.shares, position.symbol);
-		}            	
-		_updateFeatureBlock();
-	    }, false);
+			defaultDelay = _util.isPageActive(_pageId) ? 10 : 500,
+			updateDelayHome = (_curView == "viewHome") ? 10 : defaultDelay,
+			updateDelayNews = (_curView == "viewNews") ? 10 : defaultDelay,
+			updateDelayPortfolios = (_curView == "viewPortfolios") ? 0 : defaultDelay;
+			Y.later(updateDelayHome, this, function() {
+			// Immediately update the component that is active
+			_initFeatureBlock(2, position.symbol, position.shares, position.symbol);
+				if (len >= 2) {
+					position = positions[1];
+					_initFeatureBlock(3, position.symbol, position.shares, position.symbol);
+				}
+				if (len >= 4) {
+					position = positions[2];
+					_initFeatureBlock(4, position.symbol, position.shares, position.symbol);
+				}
+				if (len >= 4) {
+					position = positions[3];
+					_initFeatureBlock(5, position.symbol, position.shares, position.symbol);
+				}            	
+				_updateFeatureBlock();
+			}, false);
             Y.later(updateDelayNews, this, _getTopNews, false);
-	    Y.later(updateDelayPortfolios, this, _updatePortfolioSummaryBlocks, false);
+			Y.later(updateDelayPortfolios, this, _updatePortfolioSummaryBlocks, false);
+			Y.later(0, this, _renderEarningsCalendar, false);
         },
         onPortfolioAdded = function (port) {
             if (port) {
@@ -210,28 +250,29 @@ YUI.add('home', function (Y) {
             }
         },
         _onNavTabClicked = function(e) {
+			function setActiveTab(root, view) {
+				var nodeNew = root.one(['.', view].join("")),
+				nodeCur = root.all('.active'),
+				newTab = _root.one(['div.', view].join("")),
+				curActiveTabs = _root.all('div.active');
+				curActiveTabs.removeClass("active");
+				nodeCur.removeClass("active");
+				if (nodeNew)
+					nodeNew.addClass("active");
+				if (newTab)
+					newTab.addClass("active");
+			_curView = view;
+			}
             var view, target = e.currentTarget;
             e.preventDefault();
             if (_mUI.clickCheck(e) && !target.hasClass("active")) {
                 view = target.getAttribute("view");
-                _setActiveTab(target.ancestor(".tabs"), view);
+                setActiveTab(target.ancestor(".tabs"), view);
                 if (view == "viewChart")
                     _showChart();
             }
         },
-        _setActiveTab = function(root, view) {
-            var nodeNew = root.one(['.', view].join("")),
-            nodeCur = root.all('.active'),
-            newTab = _root.one(['div.', view].join("")),
-            curActiveTabs = _root.all('div.active');
-            curActiveTabs.removeClass("active");
-            nodeCur.removeClass("active");
-            if (nodeNew)
-                nodeNew.addClass("active");
-            if (newTab)
-            	newTab.addClass("active");
-	    _curView = view;
-        },
+        
         _onStockHistoryRecorded = function (port) {
 	    if (port.id === "total") {
 		_showChart();

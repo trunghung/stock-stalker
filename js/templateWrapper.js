@@ -55,6 +55,16 @@
 		}
         vars = vars.push(
 				{
+					shortEarningsDate: function(chunk, context, bodies, params) {
+						var date = context.get("earningsDateObj"),
+						dateStr = context.get("earningsDate"),
+						isEstimated = dateStr && dateStr.indexOf("Est") != -1;
+						
+						var dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+							month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+					
+						return isEstimated ? dateStr : [dayOfWeek[date.getDay()], month[date.getMonth()], date.getDate()].join(" ");
+					}
                     /*presenceOpi: function(chunk, context) {
                         var presence = context.get("presence"),
 							state = presence ? presence.state : context.get("presenceState");

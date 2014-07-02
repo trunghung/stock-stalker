@@ -720,3 +720,20 @@ table.buttons td:last-child {
 ul.news_container > li {
 	font-size: 16px;
 }
+
+.earnings-cal ul {
+	border: solid 1px black;
+}
+.earnings-cal ul li {
+	padding: 5px 10px;
+}
+.earnings-cal ul li .date {
+	float: right;
+}
+
+.earnings-cal ul li:nth-child(odd) {
+	background-color: white
+}
+.earnings-cal ul li:nth-child(even) {
+	background-color: #E6EFF7
+}

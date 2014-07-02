@@ -24,8 +24,10 @@ YUI.add('view_stock', function (Y) {
 			info = _quoteMgr.getAllInfo(_stock);
 			if (info.type == "equity" && !info.earningsDate) {
 				Stock.Downloader.downloadSingleQuote(_stock, function(quote) {
-					_quoteMgr.parseResults([quote]);
-					createMarkup();
+					if (quote) {
+						_quoteMgr.parseResults([quote]);
+						createMarkup();
+					}
 				});
 			}
 			Y.later(0, this, createMarkup, false);
@@ -163,16 +165,18 @@ YUI.add('view_stock', function (Y) {
             }
         }
         _setActiveTab = function(root, view) {
-            var nodeNew = root.one(['.', view].join("")),
-            nodeCur = root.all('.active'),
-            newTab = _root.one(['div.', view].join("")),
-            curActiveTabs = _root.all('div.active');
-            curActiveTabs.removeClass("active");
-            nodeCur.removeClass("active");
-            if (nodeNew)
-                nodeNew.addClass("active");
-            if (newTab)
-            	newTab.addClass("active");            
+			if (_root) {
+				var nodeNew = root.one(['.', view].join("")),
+				nodeCur = root.all('.active'),
+				newTab = _root.one(['div.', view].join("")),
+				curActiveTabs = _root.all('div.active');
+				curActiveTabs.removeClass("active");
+				nodeCur.removeClass("active");
+				if (nodeNew)
+					nodeNew.addClass("active");
+				if (newTab)
+					newTab.addClass("active");
+			}
         };
         return {
                 render: _render,

@@ -159,10 +159,9 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
 				showGain: UI_SETTINGS.hideHomeSumGain ? "false" : "true",
 				showCash: UI_SETTINGS.hideHomeSumCash ? "false" : "true",
 				expandPositions: UI_SETTINGS.expandPositions ? "false" : "true"};
-	   dust.render("settings", context, function(err, out){
-		  Y.one("#settings").setContent(out);
-		  iui.showPageById("settings");
-	   });
+				
+		Stock.Template.renderInto("settings", context, document.querySelector("#settings"));
+		iui.showPageById("settings");
 	   // Hide settings and refresh
 	   Y.one("#backButton").once("click", saveSettings);
     }
@@ -186,14 +185,13 @@ Y.use("home", "mUI", 'scrollview', function(Y) {
 	   saveLocal("settings", UI_SETTINGS);
     }
 
-    dust.render("main", {}, function(err, out){
-	   document.body.innerHTML = out;
-	   Y.Stock.home.render();
-	   bindUI();
-	   Y.all(".prerender_hidden").removeClass("prerender_hidden");
-	   Y.Stock.quoteMgr.init();
-	   Y.Stock.portMgr.init();
-    });
+	
+    Stock.Template.renderInto("main", {}, document.body);
+	Y.Stock.home.render();
+	bindUI();
+	Y.all(".prerender_hidden").removeClass("prerender_hidden");
+	Y.Stock.quoteMgr.init();
+	Y.Stock.portMgr.init();
     /*
     if (portMgr.isInit()) {
         Y.Stock.home.render();

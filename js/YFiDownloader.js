@@ -24,8 +24,9 @@
 		return ret;
 	}
 	function convertToDom(response) {
-		var el = document.createElement("DIV");
+		var el = null;
 		if (response && response.query && response.query.results && response.query.results.html) {
+			el = document.createElement("DIV");
 			el.innerHTML = response.query.results.html.replace(/[\n]/g, "").replace(/<img/g,"<img2");	// neuter all the image tags
 		}
 		return el;
@@ -33,6 +34,7 @@
 	function parseDetailedView(response) {
 		var quotes = [], range, change,
 		el = convertToDom(response);
+		if (!el) return { quotes: quotes, news: []};
 			
 		var entries = el.querySelectorAll(".yfi_summary_table");
 		for (var i=0; i < entries.length; i++) {
@@ -149,7 +151,7 @@
 			else {
 				
 			}
-			console.log("Parsed quote result: " + JSON.stringify(quote));
+			//console.log("Parsed quote result: " + JSON.stringify(quote));
 			quotes.push(quote);
 		}
 		return { quotes: quotes, news: []};
@@ -177,7 +179,7 @@
 					
 					// skip paid article and video
 					if (newsItem.title.indexOf("[$$]") == -1 && newsItem.title.indexOf("[video]") == -1) {
-						console.log("Add news item: " + JSON.stringify(newsItem));
+						//console.log("Add news item: " + JSON.stringify(newsItem));
 						news.push(newsItem);
 					}
 				}
@@ -189,6 +191,7 @@
 	function parseRTView(response) {
 		var quotes = [], news = [], range, change, info, quote,
 		el = convertToDom(response);
+		if (!el) return {quotes: quotes, news: news};
 		
 		news = parseNews(el);
 		var entries = el.querySelectorAll("table.yfi_portfolios_multiquote tr");
@@ -213,7 +216,7 @@
 			info = entry.querySelector("td.col-percent_change");
 			if (info) quote["percent-change"] = parseFloat(info.innerText.replace(/,/g, ""));
 							
-			console.log("Parsed quote result: " + JSON.stringify(quote));
+			//console.log("Parsed quote result: " + JSON.stringify(quote));
 			quotes.push(quote);
 		}
 		return {quotes: quotes, news: news};
@@ -223,7 +226,7 @@
 	function parseSingleQuoteView(ticker, response) {
 		var quotes = [], range, change, info, quote = { symbol: ticker.toUpperCase()}, elInfo,
 		elRoot = convertToDom(response), el;
-		
+		if (!elRoot) return null;
 		el = elRoot.querySelector("#yfi_investing_content .yfi_rt_quote_summary");
 		elInfo = el.querySelector(".time_rtq_ticker span");
 		if (elInfo) quote.price = parseFloat(elInfo.innerText.replace(/,/g, ""));
@@ -247,12 +250,31 @@
 		// Equity
 		if (el.length == 15) {
 			if (el[6].innerText.indexOf("Earnings") != -1) {
+				// Jul 15 - Jul 17 (Est.)
+				// "22-Jul-14"
 				quote.earningsDate = el[6].querySelector("td").innerText.trim();
+				parseEarningsDate(quote);
 			}
 		}		
 		
 		console.log("Parsed single quote result: " + JSON.stringify(quote));
 		return quote;
+	}
+	function parseEarningsDate(quote) {
+		if (quote.earningsDate.indexOf("Est.") > 0) {
+			var date = new Date(quote.earningsDate.split("-")[0] + " " + (new Date()).getFullYear());
+			if (!isNaN(date.getTime())) {
+				quote.earningsDateObj = date;
+			}
+			else {
+				console.log("Error: couldn't parse earning date");
+			}
+		}
+		else {
+			var date = new Date(quote.earningsDate);
+			if (!isNaN(date.getTime()))
+				quote.earningsDateObj = date;
+		}
 	}
 	
 	function requestFile(url, callbackFn) {
@@ -324,7 +346,7 @@
 				success: function(response) {
 					var quote = parseSingleQuoteView(ticker, JSON.parse(response));
 					//onQuotesDownloadedCB && onQuotesDownloadedCB([quote]);
-					cb && cb(quote);
+					cb && cb(quote );
 				}
 			});
 		

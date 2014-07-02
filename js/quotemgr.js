@@ -3,6 +3,7 @@ YUI.add('QuoteManager', function (Y) {
     var QuoteManager = function() {
         var _this = this;
         _this.quotesInfo = {};
+		_this.earnings = {};
         _this.yqlQuery = null;
         _this.yqlNewsQuery = null;
         _this.updatingQuote = false;
@@ -65,6 +66,7 @@ YUI.add('QuoteManager', function (Y) {
         function isNumericField(field) {            
             return field == "price" || field == "change";
         }
+		
         _this.parseResults = function(quotes) {
             var i=0, field=0;
             
@@ -76,7 +78,10 @@ YUI.add('QuoteManager', function (Y) {
 				info = _this.quotesInfo[quote.symbol];
 				for (field in quote)
 					info[field] = quote[field];
-				
+				if (quote.earningsDate && (!_this.earnings[quote.symbol] || _this.earnings[quote.symbol].date != quote.earningsDate)) {
+					_this.earnings[quote.symbol] = { date: quote.earningsDate, lastUpdated: (new Date()).getTime()};
+					localStorage.setItem("earnings", JSON.stringify(_this.earnings));
+				}
             }   
         };
         
@@ -242,7 +247,57 @@ YUI.add('QuoteManager', function (Y) {
             Y.on("portUpdated", t.onPortfolioContentChanged, t);
             Y.on("portfoliosReady", function() {
             	t.updateAllQuotesFromAccounts(true);
-            }, t);   
+            }, t);
+			function parseEarningsDate(quote) {
+				if (quote.earningsDate.indexOf("Est.") > 0) {
+					var date = new Date(quote.earningsDate.split("-")[0] + " " + (new Date()).getFullYear());
+					if (!isNaN(date.getTime())) {
+						quote.earningsDateObj = date;
+						quote.earningsDateEst = true;
+					}
+					else {
+						console.log("Error: couldn't parse earning date");
+					}
+				}
+				else {
+					var date = new Date(quote.earningsDate);
+					if (!isNaN(date.getTime())) {
+						quote.earningsDateObj = date;
+						quote.earningsDateEst = false;
+					}
+				}
+			}
+			function timeToUpdateEarnings(quote, lastUpdated) {
+				var now = new Date();
+				// If it's an estimate or the time is in the past
+				if (quote.earningsDateEst || !quote.earningsDateObj || (quote.earningsDateObj && quote.earningsDateObj.getTime() < now.getTime())) {
+					// As we get closer to the earning estimate date, we will check more frequently
+					checkInterval = quote.earningsDateObj ? (quote.earningsDateObj.getTime() - now.getTime())/4 : 2419200000;
+					return (checkInterval - (now.getTime() - lastUpdated));
+				}
+				return 1;
+			}
+			var cachedEarnings = JSON.parse(localStorage.getItem("earnings"));
+			if (cachedEarnings) {
+				_this.earnings = cachedEarnings;
+				var quotes = [];
+				for (var sym in _this.earnings) {
+					var earning = _this.earnings[sym];
+					var quote = {symbol: sym, earningsDate: earning.date };
+					parseEarningsDate(quote);
+					// Update the earnings info once a week or if the date is in the past
+					var timeToUpdate = timeToUpdateEarnings(quote, earning.lastUpdated);
+					if (timeToUpdate > 0) {
+						quotes.push(quote);
+						console.log("Earnings: Time to update: " + sym + " : " + Math.round(timeToUpdate/(24*60*60*1000)) + "days");
+					}
+					else {
+						delete _this.earnings[sym];	 // clear it from cache
+						console.log("Clear outdated earnings date for " + sym);
+					}
+				}
+				_this.parseResults(quotes);
+			}
             
             // Update the quotes for the first time
             // TODO need to optimize the timing
