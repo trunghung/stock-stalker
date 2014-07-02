@@ -272,7 +272,15 @@ YUI.add('QuoteManager', function (Y) {
 				// If it's an estimate or the time is in the past
 				if (quote.earningsDateEst || !quote.earningsDateObj || (quote.earningsDateObj && quote.earningsDateObj.getTime() < now.getTime())) {
 					// As we get closer to the earning estimate date, we will check more frequently
-					checkInterval = quote.earningsDateObj ? (quote.earningsDateObj.getTime() - now.getTime())/4 : 2419200000;
+					var timeDiff = 0, checkInterval = 2419200000;
+					if (quote.earningsDateObj) {
+						timeDiff = quote.earningsDateObj.getTime() - now.getTime();
+						// check every day if the earning is less than 2 weeks away
+						if (timeDiff < 2419200000)
+							checkInterval = 24*60*60*1000;
+						else
+							checkInterval = timeDiff/4;
+					}
 					return (checkInterval - (now.getTime() - lastUpdated));
 				}
 				return 1;
