@@ -42,6 +42,34 @@
 	dust.helpers.getDigitalSize = getDigitalSize;
 	dust.helpers.evalres = evaluateResources;
 	dust.helpers.every = everyHelper;
+	dust.helpers.formatField = function(chunk, context, bodies, params) {
+		var field = context.get(params.field),
+			format = params.format ? params.format : params.field;
+		if (field) {
+			chunk.write(formatTagValue(field, format));
+		}
+		
+		return chunk.write("");
+    };
+	dust.helpers.formatEarningDate = function(chunk, context, bodies, params) {
+		var dateStr = context.get(params.dateStr),
+		isEstimated = dateStr && dateStr.indexOf("Est") != -1;
+		
+		if (isEstimated)
+			return chunk.write(dateStr);
+	
+		return dust.helpers.formatDate(chunk, context, bodies, params);
+    };
+	dust.helpers.formatDate = function(chunk, context, bodies, params) {
+		var date = context.get(params.dateObj), str = "";
+		
+		if (date && date.getDay) {
+			var dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+				month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
+			str = [dayOfWeek[date.getDay()], month[date.getMonth()], date.getDate()].join(" ");
+		}
+		return chunk.write(str);
+    };
 
     var Context = dust.makeBase().constructor; // sneak dust's Context type out of their module.
 
@@ -55,16 +83,7 @@
 		}
         vars = vars.push(
 				{
-					shortEarningsDate: function(chunk, context, bodies, params) {
-						var date = context.get("earningsDateObj"),
-						dateStr = context.get("earningsDate"),
-						isEstimated = dateStr && dateStr.indexOf("Est") != -1;
-						
-						var dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-							month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
 					
-						return isEstimated ? dateStr : [dayOfWeek[date.getDay()], month[date.getMonth()], date.getDate()].join(" ");
-					}
                     /*presenceOpi: function(chunk, context) {
                         var presence = context.get("presence"),
 							state = presence ? presence.state : context.get("presenceState");
@@ -255,5 +274,53 @@
 
 		return chunk;
 	}
-
 })();
+
+var TAG_FORMATTER = {
+	"change": 				{ decimal: 2, dollarSign: false, percentSign: false , label: "Change"},
+	"percent-change": 		{ decimal: 1, dollarSign: false, percentSign: true, label: "Change %" },
+	"value-delta": 			{ decimal: 0, dollarSign: true, percentSign: false, label: "Day's Change" },
+	"value-delta-percent": 	{ decimal: 1, dollarSign: false, percentSign: true, label: "Day's Change %" },
+	"market-value": 		{ decimal: 0, dollarSign: true, percentSign: false, label: "Market Value" },
+	"gain": 				{ decimal: 0, dollarSign: true, percentSign: false, label: "Gain/Loss" },
+	"gain-percent": 		{ decimal: 1, dollarSign: false, percentSign: true, label: "Gain/Loss %" },
+	"price": 				{ decimal: 2, dollarSign: false, percentSign: false, label: "Last" },
+	"pf-percent":           { decimal: 0.2, dollarSign: false, percentSign: true, label: "Position" },
+	"shares":               { decimal: 0, dollarSign: false, percentSign: false, label: "Shares" }
+};
+function formatTagValue(tagValue, tag, noDollarSign, maxLength) {
+	if (Y.Lang.isNull(tagValue) || Y.Lang.isUndefined(tagValue)) 
+		tagValue = "";
+	else {
+		// Normalize large values
+        if (tagValue > 999999999) {
+            tagValue = (tagValue / 1000000000).toFixed(1) + "B";
+        }
+        else if (tagValue > 999999) {
+            tagValue = (tagValue / 1000000).toFixed(1) + "M";
+        }
+	    if (TAG_FORMATTER[tag]) {
+			var decimal = TAG_FORMATTER[tag].decimal;		
+			if (decimal >= 0) {
+			    // This is the optional decimal for smaller numbers
+			    if (decimal < 1) {
+			        if (tagValue >= 10)
+			            decimal = 0;
+			        else
+			            decimal = parseInt(decimal * 10);
+			    }
+				tagValue = tagValue.toFixed(decimal);
+			}
+			
+			if (TAG_FORMATTER[tag].dollarSign) {
+				if (noDollarSign !== true)
+					tagValue = prefixCurrency(tagValue);
+			}
+			else if (TAG_FORMATTER[tag].percentSign)
+				tagValue = appendPercentSign(tagValue);
+		}
+	}
+	if (maxLength && tagValue.length > maxLength)
+		tagValue = tagValue.substr(0, maxLength);
+	return tagValue;
+}

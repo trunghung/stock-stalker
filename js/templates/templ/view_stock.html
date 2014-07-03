@@ -61,8 +61,8 @@
 			<div class="round_header">
 				<table class="sub_header">
 					<tr>
-						<td class="first {positive} price"><div class="title">Last</div><div class="title price">{price}</div></td>
-						<td class="last {positive} change"><div class="title">Change</div><div class="title price">{change} ({percent-change})</div></td> 
+						<td class="first {positive} price"><div class="title">Last</div><div class="title price">{@formatField field="price" /}</div></td>
+						<td class="last {positive} change"><div class="title">Change</div><div class="title price">{@formatField field="change"/} ({@formatField field="percent-change" /})</div></td> 
 					</tr>
 				</table>
 			</div>
@@ -95,9 +95,16 @@
 				</tr>
 				<tr class="row">
 					<td>P/E</td>
-					<td class="value pe">{pe}</td>  
+					<td class="value pe">{?pe}{pe}{:else}N/A{/pe}</td>  
 					<td>Volume</td>
 					<td class="value vol">{vol}</td>
+				</tr>
+				
+				<tr class="row">
+					<td>EPS</td>
+					<td class="value eps">{?eps}{eps}{:else}N/A{/eps}</td>
+					<td>Dividend</td>
+					<td class="value dividend">{?dividend}{dividend} ({yield}%){:else}N/A{/dividend}</td>  
 				</tr>
 				<tr class="position_info row {show_lots}">  
 					<td>Shares</td>

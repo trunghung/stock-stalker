@@ -299,6 +299,7 @@
 			}
 			query = ['use "http://', url, 'yql_page_fetch.xml" as MyTable; select * from MyTable where url="http://finance.yahoo.com/quotes/',         
 					tickers.stocks.join(','), ",", tickers.options.join(","), '/view/dv" and  xpath="//div[@id=\'yfi-main\']"'].join('');
+			console.log("Query: " + query);
 			url = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query)  + "&format=json&rand=" + (new Date()).getTime();
 			requestFile(url, {
 				success: function(response) {

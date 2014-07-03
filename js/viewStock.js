@@ -22,7 +22,7 @@ YUI.add('view_stock', function (Y) {
             _root = info.node;
 			
 			info = _quoteMgr.getAllInfo(_stock);
-			if (info.type == "equity") {
+			if (!info.type || info.type == "equity") {
 				Stock.Downloader.downloadSingleQuote(_stock, function(quote) {
 					if (quote) {
 						_quoteMgr.parseResults([quote]);

@@ -22,6 +22,7 @@ YUI.add('home', function (Y) {
 
             _renderFeatureBlocks();
             Y.later(1000, this, _updatePortfolioSummaryBlocks, false);
+			Y.later(0, this, _renderEarningsCalendar, false);
         },
         _insertPortfolioSummaries = function() {
             var cur=0, portfolios = Y.Stock.portMgr.getPortfolios();
@@ -118,9 +119,9 @@ YUI.add('home', function (Y) {
 			var context = {}, sym, quote, quotes = [];
 			for (sym in Y.Stock.quoteMgr.quotesInfo) {
 				quote = Y.Stock.quoteMgr.quotesInfo[sym];
-				// Only show the next 2 weeks 
+				// Only show the next 4 weeks 
 				if (quote.earningsDate && quote.earningsDateObj &&
-					quote.earningsDateObj.getTime() - (new Date()).getTime() < 1209600000) {
+					quote.earningsDateObj.getTime() - (new Date()).getTime() < 2409600000) {
 					quotes.push(quote);
 				}
 			}
@@ -197,6 +198,7 @@ YUI.add('home', function (Y) {
             }
         },
         bindUI = function () {
+			
         	var node;
             Y.on('quotesInfoUpdated', onQuotesUpdated);
             Y.on("portAdded", onPortfolioAdded);
@@ -207,6 +209,17 @@ YUI.add('home', function (Y) {
             Y.on('quotesInfoUpdated', function() {
                 Y.all(".quote_update").setContent(Y.Stock.util.getLocalTime());
             });
+			_root.on("click", function(e) {
+				var el = e.target._node.dataset.action ? e.target : e.target.ancestor("[data-action]");
+				if (!el) return;
+				switch(el._node.dataset.action) {
+				case "viewStock":
+					Y.use("view_stock", function(){
+						Y.Stock.view_stock.render(el._node.dataset.sym, "total");
+					});
+					break;
+				}
+			});
             _root.one(".newPort").on("click", function(){
             	var portName = prompt("Enter your new portfolio's name:");
             	if (portName != null && portName != "") {
