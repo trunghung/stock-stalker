@@ -195,6 +195,7 @@
 		
 		news = parseNews(el);
 		var entries = el.querySelectorAll("table.yfi_portfolios_multiquote tr");
+		console.log("Downloaded quotes for " + entries.length);
 		for (var i=0; i < entries.length; i++) {
 			entry = entries[i];
 			quote = {};
