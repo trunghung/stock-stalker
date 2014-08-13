@@ -1,9 +1,0 @@
-copy index.html ..\stock-release\
-copy import.html ..\stock-release\
-copy logo* ..\stock-release\
-copy yahoo.finance.scrapper.new.xml ..\stock-release\
-
-rm ../stock-release/js/combine.js
-copy js\config.js+js\credential.js+js\data.js+js\debug.js+js\editPort.js+js\history.js+js\home.js+js\news.js+
-js\portfoliomgr.js+js\protocol.js+js\stocktrack.js+js\template.js+js\templates\template_view_stock.js+js\util.js+
-js\viewPort.js+js\viewStock.js ../stock-release/js/combine.js
