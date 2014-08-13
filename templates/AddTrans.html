@@ -1,0 +1,41 @@
+<div data-role="popup" id="AddTrans" data-theme="a" class="ui-corner-all" data-lot="{lot.objectId}">
+    <form>
+        <div>
+            <h3>Add a new transaction</h3>
+
+            <select class="portfolios" data-mini="true" data-inline="true">
+                <option >Select a portfolio</option>
+                {#ports}
+                    <option value="{objectId}" {@if cond="'{objectId}' == '{lot.portId}'" }selected{/if} >{name}</option>
+                {/ports}
+            </select>
+
+            <select class="equity-type" data-mini="true" data-inline="true">
+                <option value="0">Stock</option>
+                <option value="1">Options</option>
+                <option value="2">Employee Stock Options</option>
+            </select>
+
+			<select class="trans-type" data-mini="true" data-inline="true" {?edit}hidden{/edit}>
+				<option value="">Transaction Type</option>
+				<option value="buy">Buy</option>
+				<option value="sell">Sell</option>
+				<option value="short">Sell Short</option>
+				<option value="cover">Buy Cover</option>
+				<option value="options">Options</option>
+				<option value="stock-options">Employee Stock Options</option>
+			</select>
+			
+
+			<input type="text" name="symbol" class="symbol" value="{lot.symbol}" placeholder="Symbol" data-theme="a">
+            <input type="number" name="qty" class="qty" value="{lot.qty}" placeholder="Shares" data-theme="a">
+            <input type="number" class="price" value="{lot.price}" placeholder="Price" data-theme="a">
+            <input type="number" class="fee" value="{lot.fee}" placeholder="Commission" data-theme="a">
+            <input type="date" name="date" class="date" value="{@formatDate dateObj="transDate" formInput="1" /}" data-theme="a">
+			<!--Employee Stock Option-->
+			<input type="date" name="expiration" class="expiration" value="{@formatDate dateObj="lot.expiration" formInput="1" /}" data-theme="a">
+				
+            <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-btn-icon-left ui-icon-check" data-action="{?edit}editLot{:else}addTrans{/edit}">Save</a>
+        </div>
+    </form>
+</div>

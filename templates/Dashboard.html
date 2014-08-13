@@ -1,0 +1,77 @@
+<div class="my_portfolios" {^myPorts}hidden{/myPorts}>
+    <h3>My Portfolios</h3>
+    <div>
+        <table class="full-width draw-border">
+            <tr class="" data-id="all" data-action="viewPort" onclick="">
+                <th class="symbol">Account</td>
+                <th class="change" colspan="2"><b>Day's Change</b></td>
+                <th class="cash">Cash</td>
+                <th class="value">Mkt Value</b></td>
+            </tr>
+            {#allPorts}
+            <tr class="" data-id="all" data-action="viewPort" onclick="">
+                <td class="symbol"><b>All Portfolios</b></td>
+                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDelta}</b></td>
+                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDeltaPercent}%</b></td>
+                <td class="cash"><b>{cash}</b></td>
+                <td class="value"><b>${marketValue}</b></td>
+            </tr>
+            {/allPorts}
+            {#myPorts}
+            <tr class="" data-id="{objectId}" data-action="viewPort" onclick="">
+                <td class="symbol">{name}</td>
+                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDelta}</b></td>
+                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDeltaPercent}%</b></td>
+                <td class="cash">{cash}</td>
+                <td class="value">${marketValue}</td>
+            </tr>
+            {/myPorts}
+        </table>
+    </div>
+</div>
+
+<div class="my_stocks" {^myStocks}hidden{/myStocks}>
+    <h3>Watchlist</h3>
+    <div class="fixed-column-container">
+        <table class="draw-border">
+            <thead>
+                <tr>
+                    <th class="headcol">Symbol</th>
+                    <th>Price</th>
+                    <th colspan="2">Day's Change</th>
+                </tr>
+            </thead>
+            <tbody>
+            {#myStocks}
+                <tr class="" data-symbol="{symbol}" data-action="viewStock">
+                    <td class="symbol headcol">{@if cond="'{symbol}'.length > 15"}{quote.name}{:else}{symbol}{/if}</td>
+                    <td class="price">{quote.price}</td>
+                    <td class="change {@gte key=quote.change value=0}positive{:else}negative{/gte}">{quote.change}</td>
+                    <td class="change {@gte key=quote.change value=0}positive{:else}negative{/gte}">{quote.percent-change}%</td>
+
+                </tr>
+            {/myStocks}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div class="earnings" {^earnings}hidden{/earnings}>
+	<h3>Upcoming Earnings</h3>
+	<div>
+	{#earnings}
+		<div>{symbol} - <span class="date">{@formatEarningDate dateStr="earningsDate" dateObj="earningsDateObj" /}</span></div>
+	{/earnings}
+	</div>
+</div>
+
+<div class="headlines" {^headlines}hidden{/headlines}>
+	<h3>Headlines</h3>
+	<ul data-role="listview">
+	{#headlines}
+		<li><a href="{link}" target="_blank">{title}</a></li>
+	{/headlines}
+	</ul>
+</div>
+

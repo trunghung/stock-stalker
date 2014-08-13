@@ -1,0 +1,136 @@
+{#quote}
+<div id="stock_info_header" class="viewQuote tab_content round_block stock_info active">
+	<div class="block header dark_bg">
+		<label class="name">{name} ({symbol})</label>
+	</div>
+	<div class="block stock_info_summary color_bg">
+		<div class="round_header">
+			<table class="sub_header">
+				<tr>
+					<td class="first {positive} price"><div class="title">Last</div><div class="title price">{@formatField field="price" /}</div></td>
+					<td class="last {positive} change"><div class="title">Change</div><div class="title price">{@formatField field="change"/} ({@formatField field="percent-change" /})</div></td> 
+				</tr>
+			</table>
+		</div>
+	</div>
+	<div class="block stock_info_detail">             
+		<table>
+			<tr class="row">
+				<td>Bid</td>
+				<td class="value bid">{bid}</td>
+				<td><label>Ask</td>
+				<td class="value ask">{ask}</td>
+			</tr>
+			<tr class="row">
+				<td>Open</td>
+				<td class="value open">{open}</td>
+				<td>MCap</td>
+				<td class="value MCap">{MCap}</td>
+			</tr>
+			<tr class="row">
+				<td>Day Hi</td>
+				<td class="value high">{day_hi}</td>
+				<td>Day Lo</td>
+				<td class="value low">{day_lo}</td>
+			</tr>
+			<tr class="row">
+				<td>52w Hi</td>
+				<td class="value year_hi">{year_hi}</td>
+				<td>52w Lo</td>
+				<td class="value year_lo">{year_lo}</td>
+			</tr>
+			<tr class="row">
+				<td>P/E</td>
+				<td class="value pe">{?pe}{pe}{:else}N/A{/pe}</td>  
+				<td>Volume</td>
+				<td class="value vol">{vol}</td>
+			</tr>
+			
+			<tr class="row">
+				<td>EPS</td>
+				<td class="value eps">{?eps}{eps}{:else}N/A{/eps}</td>
+				<td>Dividend</td>
+				<td class="value dividend">{?dividend}{dividend} ({yield}%){:else}N/A{/dividend}</td>  
+			</tr>
+			<tr class="position_info row {show_lots}">  
+				<td>Shares</td>
+				<td class="value shares">{totalShares}</td>
+				<td>Earnings Date</td>
+				<td class="value earningsDate">{earningsDate}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+{/quote}
+
+<div class="viewChart tab_content round_block" hidden>
+	{#quote}
+	<div class="block header dark_bg">
+		<label class="name">{name}</label> <label class="symbol">({symbol})</label>
+	</div>
+	<div class="block content">
+		<img class="chart" src="http://chart.finance.yahoo.com/w?s={symbol}&lang=en-US&region=US" width="90%">
+	</div>
+	{/quote}
+	<ul class="chart_range tabs five_tabs">
+		<li class="1d tab first" view="1d" onclick=""><a>1d</a></li>
+		<li class="5d tab active" view="5d" onclick=""><a>5d</a></li>
+		<li class="3m tab" view="3m" onclick=""><a>3m</a></li>
+		<li class="6m tab" view="6m" onclick=""><a>6m</a></li>
+		<li class="1y tab last" view="1y" onclick=""><a>1y</a></li>
+	</ul>
+</div>
+
+
+<div class="headlines">
+    <h3>News</h3>
+    <ul data-role="listview">
+        {#headlines}
+        <li><a href="{link}" target="_blank">{title}</a></li>
+        {/headlines}
+    </ul>
+</div>
+
+<div class="viewLots tab_content">
+	<div class="lots round_block">
+		<div class="content block">
+            <h3 data-id="{port.objectId}" data-action="viewPort">{port.name}</h3>
+			<table class="full-width draw-border" portId="{port_id}">
+				<tr class="row">
+                    <th class="">Portfolio</td>
+                    <th class="">Symbol</td>
+                    <th class="">Shares</td>
+					<th class="">Paid</td>
+					<th class="">Gain</td>
+					<th class="">Value</td>
+                    <th class="">Date</td>
+				</tr>
+                {#portLotsInfo}
+                {#portLots}
+				{#lots portName=port.name}
+				<tr class="row" data-id="{objectId}">
+                    <td class="value symbol">{portName}</td>
+                    <td class="value symbol">{symbol}</td>
+					<td class="value shares">{qty}</td>
+					<td class="value price">{price}</td>
+					<td class="value price gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
+					<td class="value value market-value">{marketValue}</td>
+                    <td class="value">{@formatDate dateObj="transDate" shortDate="1" /}</td>
+                    <td class="value">
+                        <a href="#" data-action="sellLot" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-notext">Delete</a>
+                        <a href="#" data-action="viewEditTrans" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-edit ui-btn-icon-notext">Edit</a>
+                    </td>
+				</tr>
+				{/lots}
+                {/portLots}
+
+                <tr class="row" data-id="{objectId}">
+                    <td class="value symbol" colspan="4">Total</td>
+                    <td class="value price gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
+                    <td class="value value market-value" colspan="3">{marketValue}</td>
+                </tr>
+                {/portLotsInfo}
+			</table>
+		</div>
+	</div>
+</div>
