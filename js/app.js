@@ -18,6 +18,7 @@
 			$.mobile.navigate.history.stack.splice(0, 1);
 			$.mobile.navigate.history.initialDst = "Dashboard"
 		}
+		$.mobile.loading( "hide" );
 
 		function onLoginOrOut() {
 			render();
