@@ -44,7 +44,7 @@
             <tbody>
             {#myStocks}
                 <tr class="" data-symbol="{symbol}" data-action="viewStock">
-                    <td class="symbol headcol">{@if cond="'{symbol}'.length > 15"}{quote.name}{:else}{symbol}{/if}</td>
+                    <td class="symbol headcol">{@if cond="'{symbol}'.length > 15 && '{quote.name}'"}{quote.name}{:else}{symbol}{/if}</td>
                     <td class="price">{quote.price}</td>
                     <td class="change {@gte key=quote.change value=0}positive{:else}negative{/gte}">{quote.change}</td>
                     <td class="change {@gte key=quote.change value=0}positive{:else}negative{/gte}">{quote.percent-change}%</td>

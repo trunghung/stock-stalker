@@ -255,6 +255,7 @@
 					break;
 				case "viewStock":
 					if (renderViewStock(info.el.dataset.symbol, info.el.dataset.lot)) {
+						Stock.QuoteManager.downloadSingleQuote(info.el.dataset.symbol);
 						$.mobile.navigate("#ViewStock");
 					}
 					break;
@@ -499,7 +500,7 @@
 
 	function render() {
 		var page = document.querySelector(".ui-page-active");
-		switch(page.dataset.url) {
+		switch(page ? page.dataset.url : location.hash) {
 			case "Dashboard":
 				renderDashboard();
 				break;

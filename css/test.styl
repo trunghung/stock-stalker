@@ -35,6 +35,15 @@ table {
 
 	td {
 		overflow: hidden;
+		min-width: 50px;
+		white-space: nowrap;
+	}
+
+	td.label , td.left{
+		text-align: left;
+	}
+	td.value, td.right {
+		text-align: right;
 	}
 }
 
@@ -66,7 +75,9 @@ table.draw-border {
 		display: none;
 	}
 }
-
+.headlines .ui-listview {
+	margin: 1em -1em;
+}
 #Login {
 	max-width: 260px;
 }
@@ -74,7 +85,12 @@ table.draw-border {
 	text-align: center;
 	padding: 10px 20px;
 }
-
+.scroll-container {
+	display: block;
+	overflow-x: hidden;
+	overflow-y: visible;
+	margin: 0 -1em;
+}
 .fixed-column-container {
 	display: block;
 	overflow-x: hidden;
@@ -85,6 +101,9 @@ table.draw-border {
 		td:not(.headcol) {
 			padding: 10px 5px;
 			min-width: 5em;
+		}
+		td {
+			text-align: left;
 		}
 		td:not(.symbol) {
 			text-align: right;

@@ -1,0 +1,14 @@
+{
+    "applications": {
+        "Stock Stalker": {
+            "applicationId": "0MM7BbJJou2MffuPA7mk3f47EezUjCOZP3JoqfRo", 
+            "masterKey": "ixIiYhs7gozEBQrU99YWHCE9U2dcQxIsqRsGvdna"
+        }, 
+        "_default": {
+            "link": "Stock Stalker"
+        }
+    }, 
+    "global": {
+        "parseVersion": "1.2.19"
+    }
+}
