@@ -9,7 +9,7 @@ Parse.Cloud.define("getPage", function(request, response) {
 				var start, end, html = httpResponse.text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
 
 				if (!request.params.leaveImg) {
-					html = html.replace(/<img/g,"<img2");
+					html = html.replace(/src=\"http/g,'src2="http');
 				}
 				start = html.indexOf("<body");
 				end = html.indexOf("</body>");
