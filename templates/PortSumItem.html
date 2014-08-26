@@ -1,0 +1,18 @@
+<div class="port-sum summary-list-layout" data-id="{objectId}" data-action="viewPort" onclick="">
+    <div class="row">
+        <span class="name">{name}</span>
+        <span class="mkt-val mid-col">{@formatField field="marketValue" longVal="true" /}</span>
+        <span class="change-per right-col alt1 change-box {@positive val=valueDelta /}" data-action="toggleAlt" onclick="">{valueDeltaPercent}%</span>
+        <span class="change-per right-col alt2 change-box {@positive val=gainPercent /}" data-action="toggleAlt" onclick="">{gainPercent}%</span>
+    </div>
+    <div class="row small">
+        <span class="cash mid-col">${@formatField field="cash" /} cash</span>
+        <span class="change-val right-col alt1 {@positive val=valueDelta /}" data-action="toggleAlt" onclick="">{valueDelta}</span>
+        <span class="change-val right-col alt2 {@positive val=gain /}" data-action="toggleAlt" onclick="">{gain}</span>
+
+    </div>
+    {?label}
+    <div class="col-name alt1">Day's Change</div>
+    <div class="col-name alt2">Gain/Loss</div>
+    {/label}
+</div>

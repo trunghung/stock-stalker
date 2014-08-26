@@ -1,15 +1,17 @@
 (function(){
+	var dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+		month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
 	dust.helpers.formatField = function(chunk, context, bodies, params) {
 		var field = context.get(params.field),
 			format = params.format ? params.format : params.field;
-		if (field) {
-			chunk.write(formatTagValue(field, format));
+		if (field != undefined) {
+			chunk.write(formatTagValue(field, format, undefined, 0, params.longVal));
 		}
 		
 		return chunk.write("");
-     };
+    };
 	dust.helpers.quoteField = function(chunk, context, bodies, params) {
-		var symbol = context.get("symbol"),
+		var symbol = params.symbol || context.get("symbol"),
 			field = params.field,
 			quote = Stock.QuoteManager.quotes[symbol],
 			format = params.format ? params.format : field;
@@ -21,10 +23,13 @@
 			return chunk.write(symbol);
 		}
 		return chunk.write("");
-     };
+    };
+	dust.helpers.positive = function (chunk, context, bodies, params) {
+		return chunk.write(params.val >= 0 ? "positive" : "negative");
+	};
 	dust.helpers.changeClass = function(chunk, context, bodies, params) {
 		if (params.type == "quote") {
-			var symbol = context.get("symbol"),
+			var symbol = params.symbol || context.get("symbol"),
 				quote = Stock.QuoteManager.quotes[symbol];
 			return chunk.write(quote.change >= 0 ? "positive" : "negative");
 		}
@@ -130,12 +135,27 @@
 			if (params.formInput) {
 				str = date.toISOString().slice(0,10);
 			}
+			else if (params.monDD) {
+				str = month[date.getMonth()] + " " + date.getDate();
+			}
 			else if (params.shortDate) {
 				str = [date.getMonth()+1, date.getDate(), date.getFullYear()%1000].join("/");
 			}
+			else if (params.timeElapsed) {
+				var min = ((new Date()).getTime() - date.getTime())/60000, // in minutes
+					hours = min / 60,
+					days = hours / 24;
+
+				if (days > 0) {
+					str = [dayOfWeek[date.getDay()], date.getMonth() + "/" + date.getDate(), date.toLocaleTimeString()].join(" ");
+				}
+				else if (hours > 0) {
+					str = hours > 1 ? hours + " hours ago" : "1 hour ago";
+				}
+				else
+					str = min + " minutes ago";
+			}
 			else {
-				var dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-					month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "July", "Aug", "Sep", "Oct", "Nov", "Dec"];
 				str = [dayOfWeek[date.getDay()], month[date.getMonth()], date.getDate()].join(" ");
 			}
 		}
@@ -187,16 +207,21 @@ var TAG_FORMATTER = {
 	"pf-percent":           { decimal: 0.2, dollarSign: false, percentSign: true, label: "Position" },
 	"shares":               { decimal: 0, dollarSign: false, percentSign: false, label: "Shares" }
 };
-function formatTagValue(tagValue, tag, noDollarSign, maxLength) {
-	if (!tagValue)
+function formatTagValue(tagValue, tag, noDollarSign, maxLength, addComma) {
+	if (tagValue == undefined)
 		tagValue = "";
 	else {
-		// Normalize large values
-		if (tagValue > 999999999) {
-			tagValue = (tagValue / 1000000000).toFixed(1) + "B";
+		if (addComma) {
+			tagValue = addCommas(tagValue);
 		}
-		else if (tagValue > 999999) {
-			tagValue = (tagValue / 1000000).toFixed(1) + "M";
+		else {
+			// Normalize large values
+			if (tagValue > 999999999) {
+				tagValue = (tagValue / 1000000000).toFixed(1) + "B";
+			}
+			else if (tagValue > 999999) {
+				tagValue = (tagValue / 1000000).toFixed(1) + "M";
+			}
 		}
 		if (TAG_FORMATTER[tag]) {
 			if(tagValue.toFixed) {

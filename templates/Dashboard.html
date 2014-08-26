@@ -1,32 +1,19 @@
 <div class="my_portfolios" {^myPorts}hidden{/myPorts}>
-    <h3>My Portfolios</h3>
+    {#allPorts}
+    <div class="heading">{@formatField field="marketValue" longVal="true" /}</div>
+    <div>Day's Change: <span class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}">{valueDelta} ({valueDeltaPercent}%)</span></div>
+    <div>Total Gain: <span class="change {@gte key=gain value=0}positive{:else}negative{/gte}">{gain} ({gainPercent}%)</span></div>
+    <div>Cash balance: ${cash}</div>
+    {/allPorts}
+
+</div>
+
+<div class="earnings" {^earnings}hidden{/earnings}>
+    <h3>Upcoming Earnings</h3>
     <div>
-        <table class="full-width draw-border">
-            <tr class="" data-id="all" data-action="viewPort" onclick="">
-                <th class="symbol">Account</td>
-                <th class="change" colspan="2"><b>Day's Change</b></td>
-                <th class="cash">Cash</td>
-                <th class="value">Mkt Value</b></td>
-            </tr>
-            {#allPorts}
-            <tr class="" data-id="all" data-action="viewPort" onclick="">
-                <td class="symbol"><b>All Portfolios</b></td>
-                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDelta}</b></td>
-                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDeltaPercent}%</b></td>
-                <td class="cash"><b>{cash}</b></td>
-                <td class="value"><b>${marketValue}</b></td>
-            </tr>
-            {/allPorts}
-            {#myPorts}
-            <tr class="" data-id="{objectId}" data-action="viewPort" onclick="">
-                <td class="symbol">{name}</td>
-                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDelta}</b></td>
-                <td class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}"><b>{valueDeltaPercent}%</b></td>
-                <td class="cash">{cash}</td>
-                <td class="value">${marketValue}</td>
-            </tr>
-            {/myPorts}
-        </table>
+        {#earnings}
+        <div>{symbol} - <span class="date">{@formatEarningDate dateStr="earningsDate" dateObj="earningsDateObj" /}</span></div>
+        {/earnings}
     </div>
 </div>
 
@@ -54,16 +41,6 @@
             </tbody>
         </table>
     </div>
-</div>
-
-
-<div class="earnings" {^earnings}hidden{/earnings}>
-	<h3>Upcoming Earnings</h3>
-	<div>
-	{#earnings}
-		<div>{symbol} - <span class="date">{@formatEarningDate dateStr="earningsDate" dateObj="earningsDateObj" /}</span></div>
-	{/earnings}
-	</div>
 </div>
 
 <div class="headlines" {^headlines}hidden{/headlines}>

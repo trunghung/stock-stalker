@@ -1,4 +1,7 @@
+make dust
+./makeCss
 cp build/templates/* ../trunghung.github.io/build/templates/
 cp css/*.css ../trunghung.github.io/css/
 cp js/*.js ../trunghung.github.io/js/
 cp index.html ../trunghung.github.io/
+rm templates/*.js

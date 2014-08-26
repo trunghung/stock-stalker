@@ -1,20 +1,20 @@
 {#quote}
-<div id="stock_info_header" class="viewQuote tab_content round_block stock_info active">
+<div class="quote-summary">
 	<div class="title">
-		<label class="symbol">{name} ({symbol})</label>
+		<span class="h2 symbol">{name} ({symbol})</span>
 	</div>
 
 	<div class="quote">
-        <div class="price">{price}</div>
-        <div class="change">
+        <div class="h1 price">{price}</div>
+        <div class="changes">
             <span class="change">
-                <label>{^priceAH}Day's Change{:else}Today's Close{/priceAH}:</label>
-                <span class="title change {@gt key=change value=0}positive{:else}negative{/gt}">{@formatField field="change"/} ({@formatField field="percent-change" /})</span>
+                <span class="label">{^priceAH}Day's Change{:else}Today's Close{/priceAH}:</span>
+                <span class="{@gt key=change value=0}positive{:else}negative{/gt}">{@formatField field="change"/} ({@formatField field="percent-change" /})</span>
             </span>
             {?priceAH}
-            <span class="changeAH">
-                <label>After Hour:</label>
-                <span class="title change {@gt key=change value=0}positive{:else}negative{/gt}">{@formatField field="changeAH" format="change"/} ({@formatField field="percent_changeAH" format="percent-change" /})</span>
+            <span class="change changeAH">
+                <span class="label">After Hour:</span>
+                <span class="{@gt key=change value=0}positive{:else}negative{/gt}">{@formatField field="changeAH" format="change"/} ({@formatField field="percent_changeAH" format="percent-change" /})</span>
             </span>
             {/priceAH}
         </div>
@@ -57,8 +57,8 @@
 				<td class="value ">{?beta}{beta}{:else}N/A{/beta}</td-->
 				<td class="label">Dividend</td>
 				<td class="value">{?dividend}{dividend} ({yield}%){:else}N/A{/dividend}</td>
-                <td class="label">Earnings Date</td>
-                <td class="value">{earningsDate}</td>
+                <td class="label">Earnings</td>
+                <td class="value">{@formatDate dateObj="earningsDateObj" monDD=1 /}{?earningsDateEst} (Est.){/earningsDateEst}</td>
 			</tr>
 		</table>
 	</div>
@@ -84,15 +84,6 @@
 </div>
 
 
-<div class="headlines">
-    <h3>News</h3>
-    <ul data-role="listview">
-        {#headlines}
-        <li><a href="{link}" target="_blank">{title}</a></li>
-        {/headlines}
-    </ul>
-</div>
-
 <div class="lots scroll-container">
     <table class="draw-border" portId="{port_id}">
         <tr class="row">
@@ -113,7 +104,7 @@
             <td class="value shares">{qty}</td>
             <td class="value price">{price}</td>
             <td class="value price gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
-            <td class="value value market-value">{marketValue}</td>
+            <td class="value value market-value">${marketValue}</td>
             <td class="value">{@formatDate dateObj="transDate" shortDate="1" /}</td>
             <td class="value">
                 <a href="#" data-action="sellLot" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-notext">Delete</a>
@@ -126,9 +117,11 @@
         <tr class="row" data-id="{objectId}">
             <td class="value symbol" colspan="4">Total</td>
             <td class="value price gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
-            <td class="value value market-value">{marketValue}</td>
+            <td class="value value market-value">${marketValue}</td>
             <td class="value value" colspan="2"></td>
         </tr>
         {/portLotsInfo}
     </table>
 </div>
+
+{>News /}

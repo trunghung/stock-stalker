@@ -1,0 +1,296 @@
+body * {
+	font-family: Helvetica, 'Nokia Sans', Arial, Sans-serif;
+}
+.positive {
+	color: green;
+}
+
+.negative {
+	color: red;
+}
+
+.stock-stalker {
+	.ui-content {
+		/*padding: 0 0 30px 0;*/
+	}
+}
+
+#Dashboard {
+
+	.headlines .ui-listview {
+		margin: 0px;
+	}
+}
+
+table  {
+	th {
+		text-align: center;
+		padding: 3px;
+	}
+	td .ui-btn {
+		margin: 0;
+	}
+
+}
+table {
+	td:not(.symbol) {
+		text-align: right;
+	}
+
+	td {
+		overflow: hidden;
+		min-width: 50px;
+		white-space: nowrap;
+	}
+
+	td.label , td.left{
+		text-align: left;
+	}
+	td.value, td.right {
+		text-align: right;
+	}
+}
+
+table.full-width {
+	width: 100%;
+}
+
+table.draw-border {
+	border-spacing: 0px;
+	td {
+		padding: 10px 0px;
+		border-bottom: 1px solid rgba(0,0,0,0.2);
+	}
+}
+
+.ui-page-header-fixed {
+	padding-top: 45px !important;
+}
+
+.nav-panel {
+	.ui-btn-icon-right:after {
+		display: none;
+	}
+
+	&.authed .login {
+		display: none;
+	}
+	&:not(.authed) .logout {
+		display: none;
+	}
+}
+.headlines .ui-listview {
+	margin: 1em -1em;
+}
+#ViewNews, #ViewStock {
+	.ui-content {
+		padding: 0;
+	}
+}
+.headlines {
+	ul {
+		padding: 0;
+		margin: 0;
+		li {
+			display: block;
+			padding: 10px;
+			border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+			a {
+				color: black !important;
+				font-style: normal;
+				font-weight: normal;
+				text-decoration: initial;
+				font-size: 12px;
+			}
+			.description {
+				max-height: 3.8em;
+				overflow-y: hidden;
+			}
+			.title {
+				font-size: 15px;
+			}
+			.inline-quote {
+				.change {
+					padding: 0 5px;
+				}
+			}
+		}
+	}
+}
+
+#Login {
+	max-width: 260px;
+}
+[data-role="popup"] .container {
+	text-align: center;
+	padding: 10px 20px;
+}
+.scroll-container {
+	display: block;
+	overflow-x: hidden;
+	overflow-y: visible;
+	margin: 1em 0;
+}
+.fixed-column-container {
+	display: block;
+	overflow-x: hidden;
+	margin-left: 4em;
+	overflow-y: visible;
+
+	table {
+		td:not(.headcol) {
+			padding: 10px 5px;
+			min-width: 4em;
+		}
+		td {
+			text-align: left;
+		}
+		td:not(.symbol) {
+			text-align: right;
+		}
+		.headcol {
+			position:absolute;
+			width: 4em;
+			left:0;
+			top:auto;
+			overflow: hidden;
+			white-space: nowrap;
+		}
+	}
+}
+
+#Watchlist {
+
+}
+.h1 {
+	font-size: xx-large;
+}
+.h2 {
+	font-size: x-large;
+}
+#ViewStock {
+	.quote-summary {
+		padding: 1em 5px;
+		td:not(:last-child) {
+			padding-right: 10px;
+		}
+	}
+	.quote-details {
+		font-size: 12px;
+	}
+	.quote {
+
+		.label {
+			display: block;
+		}
+		.changes {
+			font-size: small;
+			.change {
+				display: inline-block;
+				padding-right: 10px;
+
+			}
+			.change:not(:last-child) {
+				border-right: 1px solid rgba(0,0,0,0.2);
+			}
+			.change:not(:first-child) {
+				padding-left: 10px;
+			}
+		}
+	}
+}
+
+#ViewPort {
+
+}
+
+#footer {
+	white-space: nowrap;
+	.ui-btn {
+		width: 20%;
+		background-color: transparent;
+		padding-left: 0;
+		padding-right: 0;
+		margin: 0;
+		padding-bottom: 5px;
+		padding-top: 2.5em;
+		font-weight: normal;
+		font-size: 12px;
+
+		&.ui-btn-icon-top:after {
+			top: .2em;
+		}
+	}
+}
+
+.my_stocks {
+	position: relative;
+}
+
+.my_portfolios {
+	padding: 5px;
+	.heading {
+		font-size: x-large;
+		padding: 0 0 15px 0;
+	}
+}
+.summary-list-container {
+	.summary-list-layout {
+		position: relative;
+		border-top: 1px solid #DDD;
+		padding: 0 0 5px 0;
+		.row {
+			text-align: right;
+			text-shadow: none;
+			font-size: 14px;
+			&:first-child > span {
+				padding-top: 1px;
+				padding-bottom: 1px;
+			}
+		}
+		.name {
+			position: absolute;
+			left: 0;
+		}
+		.change-box {
+			background-color: green;
+			color: white;
+
+			&.negative {
+				background-color: red;
+			}
+		}
+		.small {
+			font-size: 13px;
+		}
+		.right-col {
+			min-width: 65px;
+			display: inline-block;
+			padding-right: 10px;
+		}
+
+		.mid-col, .right-col {
+			text-align: right;
+		}
+		.mid-col {
+			min-width: 100px;
+			padding-right: 10px;
+			display: inline-block;
+		}
+		.col-name {
+			position: absolute;
+			right: 0;
+			top: -16px;
+			font-size: x-small;
+			min-width: 75px;
+			text-align: center;
+		}
+
+	}
+	&:not(.show-alt) .alt2 {
+		display: none;
+	}
+	&.show-alt .alt1{
+		display: none;
+	}
+}

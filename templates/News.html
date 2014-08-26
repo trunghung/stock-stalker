@@ -1,0 +1,20 @@
+<div class="headlines">
+    <ul>
+        {#headlines}
+        {@if cond="{$idx} < 20"}
+        <li><a href="{link}" target="_blank">
+            <div class="title">{title}</div>
+            <div class="source">{publisher} {@formatDate dateObj="date" timeElapsed=1 /}</div>
+            {#description}
+            <div class="description">{description}</div>
+            {/description}
+            {#symbols}
+                <span class="inline-quote">{.}
+                    <span class="change {@changeClass type="quote" symbol=. /}">{@quoteField symbol=. field="percent-change" /}</span>
+                </span>
+            {/symbols}
+        </a></li>
+        {/if}
+        {/headlines}
+    </ul>
+</div>

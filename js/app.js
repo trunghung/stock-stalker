@@ -190,6 +190,35 @@
 		}
 	}
 
+	function getAncestor(el, selector, stopAt)
+	{
+		if (!el)
+			return null;
+
+		stopAt = stopAt || document.body;
+
+		var t = el;
+
+		while (t != stopAt)
+		{
+			if (elMatchesSelector(t, selector))
+				return t;
+			t = t.parentNode;
+		}
+
+		function elMatchesSelector(el, selector)
+		{
+			var p = el.parentNode,
+				selected = p.querySelectorAll(p.tagName + " > " + selector);
+
+			for (i = 0; i < selected.length; i++)
+			{
+				if (selected[i] == el)
+					return true;
+			}
+		}
+	}
+
 
 	function bindUI() {
 		$(document).on("click", function(e) {
@@ -251,12 +280,20 @@
 					if (renderViewPort(info.el.dataset.id)) {
 						$.mobile.navigate("#ViewPort");
 					}
-
+					break;
+				case "viewPorts":
+					if (renderViewPorts())
+						$.mobile.navigate("#ViewPorts");
 					break;
 				case "viewStock":
 					if (renderViewStock(info.el.dataset.symbol, info.el.dataset.lot)) {
 						Stock.QuoteManager.downloadSingleQuote(info.el.dataset.symbol);
 						$.mobile.navigate("#ViewStock");
+					}
+					break;
+				case "viewNews":
+					if (renderViewNews()) {
+						$.mobile.navigate("#ViewNews");
 					}
 					break;
 				case "viewDashboard":
@@ -287,6 +324,15 @@
 					break;
 				case "addTrans":
 					handleAddTrans(e);
+					break;
+				case "toggleAlt":
+					var el = getAncestor(e.target, ".summary-list-container");
+					if (el) {
+						if (el.classList.contains("show-alt"))
+							el.classList.remove("show-alt");
+						else
+							el.classList.add("show-alt");
+					}
 					break;
 				case "AddPort":
 					onAddPortSubmit(e);
@@ -470,9 +516,33 @@
 		return context;
 	}
 
+	function renderViewPorts() {
+		var context = { myPorts: [] };
+		var portContext = getPortContext("all");
+		if (portContext)
+			context.allPorts = portContext;
+		Stock.Portfolios.portfolios.forEach(function(port) {
+			portContext = getPortContext(port.id);
+			if (portContext)
+				context.myPorts.push(portContext);
+		});
+		context.myPorts.sort(function(a, b) {
+			if (a.marketValue || b.marketValue)
+				return b.marketValue - a.marketValue;
+			else
+				return a.name > b.name ? 1 : (a.name == b.name ? 0 : -1);
+		});
+		renderPage("ViewPorts", "ViewPorts", context);
+		return true;
+	}
+	function renderViewNews() {
+		var context = { headlines: Stock.QuoteManager.getStocksNews() };
+		renderPage("News", "ViewNews", context);
+		return true;
+	}
 	function renderDashboard() {
 		var context = { };
-		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: false });
+		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: true });
 		context.earnings = Stock.QuoteManager.getEarnings();
 		var news = Stock.QuoteManager.getTopNews();
 		if (news.length > 0)
@@ -509,6 +579,9 @@
 				break;
 			case "ViewPort":
 				renderViewPort(page.dataset.port_id);
+				break;
+			case "ViewPorts":
+				renderViewPorts();
 				break;
 			case "ViewNews":
 				renderViewNews();

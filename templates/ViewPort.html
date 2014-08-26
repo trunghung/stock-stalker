@@ -39,7 +39,7 @@
         <th class="header title info"></th>
     </tr>
     {#lots}
-    <tr class="group_content entry" data-symbol="{symbol}" data-lot="{objectId}" data-action="viewStock">
+    <tr class="group_content entry" data-symbol="{symbol}" data-lot="{objectId}" data-action="viewStock" onclick="">
         <td class="symbol">{symbol}</td>
         <td class="price">{#quote}{price}{/quote}</td>
         <td class="change {@gt key=quote.change value=0}positive{:else}negative{/gt}">{quote.change} ({quote.percent-change}%)</td>
