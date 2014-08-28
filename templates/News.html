@@ -2,18 +2,23 @@
     <ul>
         {#headlines}
         {@if cond="{$idx} < 20"}
-        <li><a href="{link}" target="_blank">
-            <div class="title">{title}</div>
-            <div class="source">{publisher} {@formatDate dateObj="date" timeElapsed=1 /}</div>
+        <li class="news-item" data-action="viewNewsArticle" data-link="{link}" data-title="{title}" data-date="{pubDate}" onclick="">
+            <div class="title">{title|s}</div>
+            <div class="source">{?publisher}<span class="publisher">{publisher|s}</span>{/publisher}<span class="pubDate">{@formatDate dateObj="date" timeElapsed=1 /}</span></div>
             {#description}
             <div class="description">{description}</div>
             {/description}
-            {#symbols}
-                <span class="inline-quote">{.}
-                    <span class="change {@changeClass type="quote" symbol=. /}">{@quoteField symbol=. field="percent-change" /}</span>
+            <div class="inline-quotes">
+                <span class="inline-quote">{symbol}
+                        <span class="change {@changeClass type="quote" symbol=symbol /}">{@quoteField symbol=symbol field="percent-change" /}</span>
                 </span>
-            {/symbols}
-        </a></li>
+                {#symbols}
+                    <span class="inline-quote">{.}
+                        <span class="change {@changeClass type="quote" symbol=. /}">{@quoteField symbol=. field="percent-change" /}</span>
+                    </span>
+                {/symbols}
+            </div>
+        </li>
         {/if}
         {/headlines}
     </ul>

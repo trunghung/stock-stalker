@@ -20,9 +20,10 @@ dust:
 	done \
 	
 	@echo $(ECHO_FLAG) "Combining dust templates"
-	@if test -e build/templates.js; \
+	@if test -e build/templates/templates.js; \
 	then rm build/templates/templates.js; \
 	fi
 	@for file in templates/*.js ; do \
 		cat $$file >> build/templates/templates.js; \
+		echo "\n" >> build/templates/templates.js; \
 	done \

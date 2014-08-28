@@ -1,0 +1,15 @@
+<div class="news-item">
+    <div class="title">{title|s}</div>
+    <div class="source">{?publisher}<span class="publisher">{publisher|s}</span>{/publisher}<span class="pubDate">{@formatDate dateObj="date" timeElapsed=1 /}</span></div>
+    <div class="content">
+        {content|s}
+    </div>
+
+    <div class="inline-quotes">
+        {#symbols}
+        <span class="inline-quote">{.}
+            <span class="change {@changeClass type="quote" symbol=. /}">{@quoteField symbol=. field="percent-change" /}</span>
+        </span>
+        {/symbols}
+    </div>
+</div>
