@@ -1,5 +1,5 @@
 {#port}
-<div class="port_summary" data-id="{objectId}" onclick="">
+<div class="port_summary" data-id="{objectId}">
 	<div class="round_block" >
 	    <div class="block header lighter_bg">
 		   <h2 class="name">{name}<span class="market-value value right-align">{@getPortInfo field="market-value" /}</span></h2> 
@@ -39,7 +39,7 @@
         <th class="header title info"></th>
     </tr>
     {#lots}
-    <tr class="group_content entry" data-symbol="{symbol}" data-lot="{objectId}" data-action="viewStock" onclick="">
+    <tr class="group_content entry" data-symbol="{symbol}" data-lot="{objectId}" data-action="viewStock">
         <td class="symbol">{symbol}</td>
         <td class="price">{#quote}{price}{/quote}</td>
         <td class="change {@gt key=quote.change value=0}positive{:else}negative{/gt}">{quote.change} ({quote.percent-change}%)</td>
@@ -57,12 +57,12 @@
     </tr>
     {/lots}
     {#port}
-    <tr class="cash entry" sym="{symbol}" data-id="{objectId}" data-action="viewLot" onclick="">{~n}
+    <tr class="cash entry" sym="{symbol}" data-id="{objectId}" data-action="viewLot">{~n}
         <td class="symbol" colspan="7">Cash</td>
         <td class="value {@gt key=cash value=0}positive{:else}negative{/gt}" >${cash}</td>
         <td ></td>
     </tr>
-    <tr class="total entry" sym="{symbol}" data-id="{objectId}" data-action="viewLot" onclick="">{~n}
+    <tr class="total entry" sym="{symbol}" data-id="{objectId}" data-action="viewLot">{~n}
         <td class="symbol" colspan="4"><b>Total</b></td>
         <td class="value-delta">{@getPortInfo field="valueDelta" /}</td>
         <td class="cost"></td>

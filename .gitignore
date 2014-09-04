@@ -3,3 +3,6 @@ node_modules/*
 templates/*.js
 .idea/*
 css/stockstalker.css
+Scraper/public/css/*
+Scraper/public/js/*
+Scraper/public/Build/*

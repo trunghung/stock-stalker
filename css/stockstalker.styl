@@ -1,5 +1,11 @@
 body * {
 	font-family: Helvetica, 'Nokia Sans', Arial, Sans-serif;
+	.ui-page {
+		-webkit-user-select: none;
+	}
+}
+.ui-page .ui-content {
+	padding: 5px;
 }
 .positive {
 	color: green;
@@ -116,6 +122,9 @@ table.draw-border {
 			}
 		}
 	}
+}
+[data-action]:hover, [data-action]:hover td {
+	background-color : rgba(0,0,0,0.1);
 }
 
 #Login {
@@ -263,19 +272,31 @@ table.draw-border {
 	.summary-list-layout {
 		position: relative;
 		border-top: 1px solid #DDD;
-		padding: 0 0 5px 0;
+		padding: 0 0 8px 0;
 		.row {
 			text-align: right;
 			text-shadow: none;
-			font-size: 14px;
+			font-size: medium;
 			&:first-child > span {
-				padding-top: 1px;
-				padding-bottom: 1px;
+				padding-top: 3px;
+				padding-bottom: 3px;
 			}
 		}
-		.name {
+		.left {
 			position: absolute;
 			left: 0;
+			text-align: left;
+		}
+		.name {
+			display: block;
+			max-width: 13em;
+			white-space: nowrap;
+			overflow: hidden;
+		}
+		.subtitle {
+			max-width: 14em;
+			overflow: hidden;
+			white-space: nowrap;
 		}
 		.change-box {
 			background-color: green;
@@ -286,7 +307,7 @@ table.draw-border {
 			}
 		}
 		.small {
-			font-size: 13px;
+			font-size: small;
 		}
 		.right-col {
 			min-width: 65px;

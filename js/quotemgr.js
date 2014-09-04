@@ -10,6 +10,7 @@
 	yqlNewsQuery = null,
 	updatingQuote = false,
 	quoteDownloaded = false,
+	_lastUpdatedEarnings = null,
 	_lastFullFetch = 0;
 	
     Stock.QuoteManager = quoteMgr = {
@@ -21,6 +22,7 @@
 	    downloadSingleQuote: downloadSingleQuote,
 		
 		getInfo: getInfo,
+	    getNewsItem: getNewsItem,
 		getEarnings: getEarnings,
 		getTopNews: getTopNews,
 	    getStocksNews: getStocksNews,
@@ -228,20 +230,24 @@
 		return earnings;
 	}
 	function updateEarnings() {
-		var count = 0;
-		for (sym in _quotesInfo) {
-			quote = _quotesInfo[sym];
-			if (count > 4) break;	// download 5 each time to avoid hitting the server too much
-			if (quote.type == "equity") {
-				if (!quote.earningsDate) {
-					Stock.Downloader.downloadSingleQuote(quote.symbol, function(quote) {
-						if (quote) {
-							parseResults([quote]);
-						}
-					});
-					count++;
+		if (Stock.Utils.timeMoreThan(_lastUpdatedEarnings, 60)) {
+			var quote, count = 0;
+			for (sym in _quotesInfo) {
+				quote = _quotesInfo[sym];
+				if (count > 10) break;	// download 5 each time to avoid hitting the server too much
+				if (quote.type == "equity") {
+					if (!quote.earningsDate) {
+						Stock.Downloader.downloadSingleQuote(quote.symbol, function (quote) {
+							if (quote) {
+								parseResults([quote]);
+							}
+						});
+						count++;
+					}
 				}
 			}
+			if (count > 0)
+				_lastUpdatedEarnings = new Date();
 		}
 	}
 	function getTopNews(callback) {
@@ -250,15 +256,18 @@
 		if (_lastTopNewsUpdatedHour != hour) { 
 			_lastTopNewsUpdatedHour = hour;
 			Stock.Downloader.getTopNews(function(news) {
-				if (news)
-					_topNews = news;
+				for (var i in news) {
+					var curItem = news[i];
+					curItem.date = new Date(curItem.pubDate);
+					Stock.News.parseItem(curItem);
+				}
+				_topNews = news;
 				quoteMgr.trigger('topNews', _topNews);
 				callback && callback(_topNews);
 			});
 		}
 		return _topNews;
 	}
-
 	function getNews(symbol) {
 		if (Stock.Utils.timeMoreThan(_newsLastFetched[symbol], 10)) {
 			_newsLastFetched[symbol] = new Date();
@@ -277,6 +286,13 @@
 		}
 		return _combinedNews.filter(filter);
 	}
+	function getNewsItem(url, topNews) {
+		var news = topNews ? _topNews : _combinedNews,
+		    matches = news.filter(function(item) {
+			return item.link == url;
+		});
+		return matches.length > 0 ? matches[0] : null;
+	}
 	var _newsEventPending = false;
 	var _newsLastFetched = [];
 	var _combinedNews = [];
@@ -284,20 +300,18 @@
 		var curItem, existing;
 		// Merge news
 		for (var i in newsItem) {
-			curItem = newsItem[i];
-			curItem.date = new Date(curItem.pubDate);
+				curItem = newsItem[i];
+				curItem.date = new Date(curItem.pubDate);
 			// Drop news items older than 8 weeks and video and paid news link
 			if (Stock.Utils.timeMoreThan(curItem.date, 80640)) {
 				console.log("News: Old new items. Date: " + curItem.pubDate);
 				continue;
 			}
-			if (curItem.title.indexOf("[$$]") == -1 && curItem.title.indexOf("[video]") == -1) {
+			if (curItem.title.indexOf("[$$]") == -1 && curItem.title.indexOf("[video]") == -1 && Stock.News.parseItem(curItem)) {
 				existing = _combinedNews.filter(function (msg) {
 					return msg.title == curItem.title;
 				});
 				if (existing.length == 0) {
-					// Remove the tracking image
-					curItem.description = curItem.description.replace(/<img.*>/, "");
 					_combinedNews.push(curItem);
 					console.log("News: Adding new news item");
 				}
@@ -305,10 +319,10 @@
 					curItem = existing;
 					console.log("News: Matching item found. GUID: " + curItem.guid);
 				}
-				if (!curItem.symbol) {
+				if (symbol && !curItem.symbol) {
 					curItem.symbol = symbol;
 				}
-				else if (curItem.symbol != symbol) {
+				else if (symbol && curItem.symbol != symbol) {
 					// is the symbol already saved in the list
 					if (curItem.symbols.filter(function (item) {
 						return item == symbol;

@@ -4,6 +4,9 @@
 Parse.Cloud.define("getPage", function(request, response) {
   		Parse.Cloud.httpRequest({
 			url: request.params.url,
+		    headers: {
+			    "user-agent" : "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"
+		    },
 			success: function(httpResponse) {
 				// First remove all the script tag from the html string and neuter the img tag
 				var start, end, html = httpResponse.text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
@@ -17,7 +20,7 @@ Parse.Cloud.define("getPage", function(request, response) {
 					response.success(html.substring(start, end+7));
 				}
 				else {
-					response.success('Request failed: cannot find body ' + httpResponse.status);
+					response.success(httpResponse.text);
 				}
 
 			},

@@ -1,0 +1,26 @@
+<div class="quote-sum summary-list-layout" data-symbol="{symbol}" data-action="viewStock">
+    <div class="row">
+        <span class="left">
+            {?quote.isOption}
+            <span class="name">{quote.name}</span>
+            {:else}
+            <span class="name">{symbol}</span>
+            <span class="subtitle small">{quote.name}</span>
+            {/quote.isOption}
+        </span>
+        <span class="mkt-val mid-col">{?quote.price}{quote.price}{:else}N/A{/quote.price}</span>
+        <span class="change-per right-col alt1 change-box {@positive val=quote.change /}" data-action="toggleAlt">{?quote.change}{quote.change}{:else}N/A{/quote.change}</span>
+        <span class="change-per right-col alt2 change-box {@positive val=quote.percent-change /}" data-action="toggleAlt">{?quote.percent-change}{quote.percent-change}%{:else}N/A{/quote.percent-change}</span>
+    </div>
+    <div class="row small">
+        <span class="cash mid-col " hidden></span>
+        {?quote.changeAH}
+        <span class="change-val right-col alt1 {@positive val=quote.changeAH /}" data-action="toggleAlt">{quote.changeAH}</span>
+        <span class="change-val right-col alt2 {@positive val=quote.percent_changeAH /}" data-action="toggleAlt">{quote.percent_changeAH}</span>
+        {/quote.changeAH}
+    </div>
+    {?hasLabel}
+    <div class="col-name alt1">Change</div>
+    <div class="col-name alt2">Change %</div>
+    {/hasLabel}
+</div>

@@ -219,170 +219,179 @@
 		}
 	}
 
-
-	function bindUI() {
-		$(document).on("click", function(e) {
-			var info = getDataAction(e.target, 2),
-				handled = true;
-			switch(info.action) {
-				case "login":
-					renderPopup("Login", "Login", {});
-					$("#Login").popup("open").enhanceWithin();
-					$('#Login form').on('submit', function (e) {
-						$("#Login").popup("close");
-						Stock.Portfolios.login($("#Login .un").val(), $("#Login .pw").val(), function(err) {
-							if (err) {
-								alert("Login failed. Please try again.")
-							}
-						});
-						e.preventDefault();
+	function onClick(e) {
+		var info = getDataAction(e.target, 2),
+			handled = true;
+		switch(info.action) {
+			case "login":
+				renderPopup("Login", "Login", {});
+				$("#Login").popup("open").enhanceWithin();
+				$('#Login form').on('submit', function (e) {
+					$("#Login").popup("close");
+					Stock.Portfolios.login($("#Login .un").val(), $("#Login .pw").val(), function(err) {
+						if (err) {
+							alert("Login failed. Please try again.")
+						}
 					});
-					break;
-				case "logout":
-					Stock.Portfolios.logout();
-					break;
-				case "showSignup":
-					renderPage("Signup", "Signup", {});
-					$.mobile.navigate("#Signup");
-					var page = $("#Signup");
+					e.preventDefault();
+				});
+				break;
+			case "logout":
+				Stock.Portfolios.logout();
+				break;
+			case "showSignup":
+				renderPage("Signup", "Signup", {});
+				$.mobile.navigate("#Signup");
+				var page = $("#Signup");
 
-					page.find('form').on('submit', function (e) {
-						var username = page.find(".un").val(),
-							pass = page.find(".pw").val(),
-							pass2 = page.find(".pw2").val(),
-							fn = page.find(".fn").val(),
-							ln = page.find(".ln").val(),
-							email = page.find(".em").val();
-						if (pass == pass2) {
-							if (fn && ln && email) {
-								Stock.Portfolios.createAccount(username, pass, fn, ln, email, function (err, msg) {
-									if (err) {
-										alert("Registration failed. Please try again. " + msg);
-									}
-									else {
-										$.mobile.navigate("#Dashboard");
-										alert("Welcome " + fn);
-										page.remove();
-									}
-								});
-							}
-							else {
-								alert("Please fill out all the information");
-							}
+				page.find('form').on('submit', function (e) {
+					var username = page.find(".un").val(),
+						pass = page.find(".pw").val(),
+						pass2 = page.find(".pw2").val(),
+						fn = page.find(".fn").val(),
+						ln = page.find(".ln").val(),
+						email = page.find(".em").val();
+					if (pass == pass2) {
+						if (fn && ln && email) {
+							Stock.Portfolios.createAccount(username, pass, fn, ln, email, function (err, msg) {
+								if (err) {
+									alert("Registration failed. Please try again. " + msg);
+								}
+								else {
+									$.mobile.navigate("#Dashboard");
+									alert("Welcome " + fn);
+									page.remove();
+								}
+							});
 						}
 						else {
-							alert("Password doesn't match");
-						}
-						e.preventDefault();
-					});
-					break;
-				case "viewPort":
-					if (renderViewPort(info.el.dataset.id)) {
-						$.mobile.navigate("#ViewPort");
-					}
-					break;
-				case "viewPorts":
-					if (renderViewPorts())
-						$.mobile.navigate("#ViewPorts");
-					break;
-				case "viewStock":
-					if (renderViewStock(info.el.dataset.symbol, info.el.dataset.lot)) {
-						Stock.QuoteManager.downloadSingleQuote(info.el.dataset.symbol);
-						$.mobile.navigate("#ViewStock");
-					}
-					break;
-				case "viewNewsArticle":
-					$.mobile.loading( "show" );
-					Stock.Downloader.getNewsContent(info.el.dataset.link, function(newsItem) {
-						renderPage("ViewNewsArticle", "ViewNewsArticle", newsItem);
-						$.mobile.navigate("#ViewNewsArticle");
-						$.mobile.loading( "hide" );
-					});
-					break;
-				case "viewNews":
-					if (renderViewNews()) {
-						$.mobile.navigate("#ViewNews");
-					}
-					break;
-				case "viewDashboard":
-					$.mobile.navigate("#Dashboard");
-					break;
-				case "viewPorts":
-					$.mobile.navigate("#Portfolios");
-					break;
-				case "viewAddPort":
-					renderPopup("AddPort", "AddPort", {});
-					$("#AddPort").popup("open");
-					break;
-				case "viewAddTrans":
-					// Refresh the portfolio to prevent stale info
-					Stock.Portfolios.update();
-					renderPopup("AddTrans", "AddTrans", { ports: Stock.Portfolios.portfolios.toJSON(), transDate: new Date() });
-					$("#AddTrans").popup("open");
-					break;
-				case "viewEditTrans":
-					var lot = Stock.Portfolios.lots.get(info.el.dataset.lot);
-					if (lot) {
-						renderPopup("AddTrans", "AddTrans", { edit: true, ports: Stock.Portfolios.portfolios.toJSON(), lot: lot.toJSON(), transDate: lot.get("transDate") });
-						$("#AddTrans").popup("open");
-					}
-					break;
-				case "editLot":
-					handleEditTrans(e);
-					break;
-				case "addTrans":
-					handleAddTrans(e);
-					break;
-				case "toggleAlt":
-					var el = getAncestor(e.target, ".summary-list-container");
-					if (el) {
-						if (el.classList.contains("show-alt"))
-							el.classList.remove("show-alt");
-						else
-							el.classList.add("show-alt");
-					}
-					break;
-				case "AddPort":
-					onAddPortSubmit(e);
-					break;
-				case "refresh":
-					Stock.Portfolios.update();
-					Stock.QuoteManager.update();
-					break;
-				case "sellLot":
-					var lot = Stock.Portfolios.lots.get(info.el.dataset.lot);
-					if (lot) {
-						var price = prompt("What was the sell price for " + lot.get("symbol") + "?");
-						if (price > 0) {
-							var qty = prompt("How many shares to sell?", lot.get("qty"));
-							if (qty > 0) {
-								Stock.Portfolios.sellLot(lot, qty, price, 0);
-							}
-						}
-
-					}
-					break;
-				case "setPortCash":
-					var port = Stock.Portfolios.portfolios.get(info.el.dataset.id);
-					if (port) {
-						var cash = prompt("What's the cash balance for " + port.get("name") + "?");
-						if (cash)
-							cash = cash.replace(",", "");
-						if (cash >= 0) {
-							Stock.Portfolios.updateCash(port, cash);
+							alert("Please fill out all the information");
 						}
 					}
 					else {
-						alert("Can't find the portfolio");
+						alert("Password doesn't match");
 					}
-					break;
-				default:
-					handled = false;
-					break;
-			}
-			if (handled)
-				e.preventDefault();
-		});
+					e.preventDefault();
+				});
+				break;
+			case "viewPort":
+				if (renderViewPort(info.el.dataset.id)) {
+					$.mobile.navigate("#ViewPort");
+				}
+				break;
+			case "viewPorts":
+				if (renderViewPorts())
+					$.mobile.navigate("#ViewPorts");
+				break;
+			case "viewStock":
+				if (renderViewStock(info.el.dataset.symbol, info.el.dataset.lot)) {
+					Stock.QuoteManager.downloadSingleQuote(info.el.dataset.symbol);
+					$.mobile.navigate("#ViewStock");
+				}
+				break;
+			case "viewNewsArticle":
+				$.mobile.loading( "show" );
+				var item = Stock.QuoteManager.getNewsItem(info.el.dataset.link, info.el.dataset.topnews == 1);
+				function renderNewsArticle(newsItem) {
+					if (newsItem) {
+						renderPage("ViewNewsArticle", "ViewNewsArticle", newsItem);
+						$.mobile.navigate("#ViewNewsArticle");
+						$.mobile.loading("hide");
+					}
+					else {
+						alert("Failed to load news article");
+					}
+				}
+
+				renderNewsArticle(item);
+				Stock.News.getNewsContent(item, renderNewsArticle);
+				break;
+			case "viewNews":
+				if (renderViewNews()) {
+					$.mobile.navigate("#ViewNews");
+				}
+				break;
+			case "viewDashboard":
+				$.mobile.navigate("#Dashboard");
+				break;
+			case "viewPorts":
+				$.mobile.navigate("#Portfolios");
+				break;
+			case "viewAddPort":
+				renderPopup("AddPort", "AddPort", {});
+				$("#AddPort").popup("open");
+				break;
+			case "viewAddTrans":
+				// Refresh the portfolio to prevent stale info
+				Stock.Portfolios.update();
+				renderPopup("AddTrans", "AddTrans", { ports: Stock.Portfolios.portfolios.toJSON(), transDate: new Date() });
+				$("#AddTrans").popup("open");
+				break;
+			case "viewEditTrans":
+				var lot = Stock.Portfolios.lots.get(info.el.dataset.lot);
+				if (lot) {
+					renderPopup("AddTrans", "AddTrans", { edit: true, ports: Stock.Portfolios.portfolios.toJSON(), lot: lot.toJSON(), transDate: lot.get("transDate") });
+					$("#AddTrans").popup("open");
+				}
+				break;
+			case "editLot":
+				handleEditTrans(e);
+				break;
+			case "addTrans":
+				handleAddTrans(e);
+				break;
+			case "toggleAlt":
+				var el = getAncestor(e.target, ".summary-list-container");
+				if (el) {
+					if (el.classList.contains("show-alt"))
+						el.classList.remove("show-alt");
+					else
+						el.classList.add("show-alt");
+				}
+				break;
+			case "AddPort":
+				onAddPortSubmit(e);
+				break;
+			case "refresh":
+				Stock.Portfolios.update();
+				Stock.QuoteManager.update();
+				break;
+			case "sellLot":
+				var lot = Stock.Portfolios.lots.get(info.el.dataset.lot);
+				if (lot) {
+					var price = prompt("What was the sell price for " + lot.get("symbol") + "?");
+					if (price > 0) {
+						var qty = prompt("How many shares to sell?", lot.get("qty"));
+						if (qty > 0) {
+							Stock.Portfolios.sellLot(lot, qty, price, 0);
+						}
+					}
+
+				}
+				break;
+			case "setPortCash":
+				var port = Stock.Portfolios.portfolios.get(info.el.dataset.id);
+				if (port) {
+					var cash = prompt("What's the cash balance for " + port.get("name") + "?");
+					if (cash)
+						cash = cash.replace(",", "");
+					if (cash >= 0) {
+						Stock.Portfolios.updateCash(port, cash);
+					}
+				}
+				else {
+					alert("Can't find the portfolio");
+				}
+				break;
+			default:
+				handled = false;
+				break;
+		}
+		if (handled)
+			e.preventDefault();
+	}
+	function bindUI() {
+		$(document).on("tap", onClick);
 	}
 
 	function renderViewStock(symbol, portId) {
@@ -464,6 +473,7 @@
 	function renderPage(template, pageId, context) {
 		var cssSel = "#" + pageId,
 			page = document.querySelector(cssSel);
+		context = context || {};
 		context.authenticated = Stock.Portfolios.isAuthed();
 		if (!page) {
 			context.pageId = pageId;
@@ -550,7 +560,7 @@
 	}
 	function renderDashboard() {
 		var context = { };
-		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: true });
+		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: false });
 		context.earnings = Stock.QuoteManager.getEarnings();
 		var news = Stock.QuoteManager.getTopNews();
 		if (news.length > 0)

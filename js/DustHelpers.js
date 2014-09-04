@@ -25,7 +25,7 @@
 		return chunk.write("");
     };
 	dust.helpers.positive = function (chunk, context, bodies, params) {
-		return chunk.write(params.val >= 0 ? "positive" : "negative");
+		return chunk.write(params.val >= 0 ? (params.negativeOnly ? "" : "positive") : "negative");
 	};
 	dust.helpers.changeClass = function(chunk, context, bodies, params) {
 		if (params.type == "quote") {
@@ -142,9 +142,9 @@
 				str = [date.getMonth()+1, date.getDate(), date.getFullYear()%1000].join("/");
 			}
 			else if (params.timeElapsed) {
-				var min = ((new Date()).getTime() - date.getTime())/60000, // in minutes
-					hours = min / 60,
-					days = hours / 24;
+				var min = Math.round(((new Date()).getTime() - date.getTime())/60000), // in minutes
+					hours = Math.round(min / 60),
+					days = Math.round(hours / 24);
 
 				if (days > 0) {
 					str = [dayOfWeek[date.getDay()], (date.getMonth() + 1) + "/" + date.getDate(), date.toLocaleTimeString()].join(" ");
@@ -200,9 +200,10 @@ var TAG_FORMATTER = {
 	"percent-change": 		{ decimal: 1, dollarSign: false, percentSign: true, label: "Change %" },
 	"valueDelta": 			{ decimal: 0, dollarSign: true, percentSign: false, label: "Day's Change" },
 	"valueDeltaPercent": 	{ decimal: 1, dollarSign: false, percentSign: true, label: "Day's Change %" },
-	"marketValue": 		{ decimal: 0, dollarSign: true, percentSign: false, label: "Market Value" },
+	"marketValue": 		    { decimal: 0, dollarSign: true, percentSign: false, label: "Market Value" },
 	"gain": 				{ decimal: 0, dollarSign: true, percentSign: false, label: "Gain/Loss" },
-	"gainPercent": 		{ decimal: 1, dollarSign: false, percentSign: true, label: "Gain/Loss %" },
+	"cash": 				{ decimal: 0, dollarSign: true, percentSign: false, label: "Cash" },
+	"gainPercent": 		    { decimal: 1, dollarSign: false, percentSign: true, label: "Gain/Loss %" },
 	"price": 				{ decimal: 2, dollarSign: false, percentSign: false, label: "Last" },
 	"pf-percent":           { decimal: 0.2, dollarSign: false, percentSign: true, label: "Position" },
 	"shares":               { decimal: 0, dollarSign: false, percentSign: false, label: "Shares" }

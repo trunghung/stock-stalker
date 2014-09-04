@@ -1,13 +1,13 @@
 <div class="headlines">
     <ul>
         {#headlines}
-        {@if cond="{$idx} < 20"}
-        <li class="news-item" data-action="viewNewsArticle" data-link="{link}" data-title="{title}" data-date="{pubDate}" onclick="">
+        <li class="news-item" data-action="viewNewsArticle" {?topNews}data-topnews="1"{/topNews} data-link="{link}" data-title="{title}" data-date="{pubDate}">
             <div class="title">{title|s}</div>
             <div class="source">{?publisher}<span class="publisher">{publisher|s}</span>{/publisher}<span class="pubDate">{@formatDate dateObj="date" timeElapsed=1 /}</span></div>
             {#description}
             <div class="description">{description}</div>
             {/description}
+            {#symbol}
             <div class="inline-quotes">
                 <span class="inline-quote">{symbol}
                         <span class="change {@changeClass type="quote" symbol=symbol /}">{@quoteField symbol=symbol field="percent-change" /}</span>
@@ -18,8 +18,8 @@
                     </span>
                 {/symbols}
             </div>
+            {/symbol}
         </li>
-        {/if}
         {/headlines}
     </ul>
 </div>

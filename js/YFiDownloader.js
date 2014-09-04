@@ -23,18 +23,10 @@
 		}
 		return ret;
 	}
-	function convertToDom(html) {
-		var el = null;
-		if (html) {
-			el = document.createElement("DIV");
-			// neuter all the image and script tags
-			el.innerHTML = html;
-		}
-		return el;
-	}
+
 	function parseDetailedView(response) {
 		var quotes = [], range, change,
-		el = convertToDom(response);
+		el = Stock.Utils.convertToDom(response);
 		if (!el) return { quotes: quotes, news: []};
 			
 		var entries = el.querySelectorAll(".yfi_summary_table");
@@ -141,6 +133,7 @@
 					quote.day_lo = range.low;
 					quote.day_hi = range.high;
 					quote.type = "option";
+					quote.isOption = true;
 															
 					quote.vol = parseFloat(info[4].innerText);
 					
@@ -158,7 +151,7 @@
 							isPut = info.charAt(7);
 
 						if (noSymbol)
-							return [expiration[1], "'" + expiration[2]%1000, quote.strike, isPut ? "P" : "C" ].join(" ");
+							return [expiration[1], "'" + expiration[2]%1000, quote.strike, isPut ? "Put" : "Call" ].join(" ");
 						else
 							return [symbol, expiration[1], /*expiration[0], */"'" + expiration[2]%1000, quote.strike, isPut ? "P" : "C" ].join(" ");
 					}
@@ -207,7 +200,7 @@
 	}
 	function parseRTView(response) {
 		var quotes = [], news = [], range, change, info, quote,
-		el = convertToDom(response);
+		el = Stock.Utils.convertToDom(response);
 		if (!el) return {quotes: quotes, news: news};
 		
 		news = parseNews(el);
@@ -243,7 +236,7 @@
 	// ETF: IVV, OPTIONS: yhoo150117c00025000, MF: fcntx
 	function parseSingleQuoteView(ticker, response) {
 		var isUp = false, quotes = [], range, change, info, quote = { symbol: ticker.toUpperCase()}, elInfo,
-		elRoot = convertToDom(response), el;
+		elRoot = Stock.Utils.convertToDom(response), el;
 		if (!elRoot) return null;
 		el = elRoot.querySelector("#yfi_investing_content .yfi_rt_quote_summary");
 		elInfo = el.querySelector(".time_rtq_ticker span");
@@ -299,42 +292,13 @@
 				quote.earningsDateObj = date;
 		}
 	}
-	
-	function requestFile(url, callbackFn) {
-		Parse.Cloud.run('getPage', { url: url }, {
-			success: function(data) {
-				callbackFn.success(data);
-			},
-			error: function(error) {
-				callbackFn.error();
-			}
-		});
-	}
-	function requestFileXHR(url, callbackFn) {
-		var xmlhttp=new XMLHttpRequest();
-		xmlhttp.onreadystatechange=function() {
-			if (xmlhttp.readyState==4) {
-				if (xmlhttp.status==200 && callbackFn.success)
-					callbackFn.success(xmlhttp.responseText);
-				else if (xmlhttp.status!=200 && callbackFn.error)
-					callbackFn.error();
-			}
-		};
-		xmlhttp.open("GET", url, true);
-		xmlhttp.send();
-	}
+
 	function downloadDetailedQuotes(tickers) {
 		var url;
 		if (tickers && tickers.options.length > 0 || tickers.stocks.length > 0) {
-			url = window.location.host + window.location.pathname;
-			if (url.lastIndexOf("localhost") != -1 || url.lastIndexOf("127.0.0.1") != -1) {
-				url = "pair.jimming.com/money/";
-			}
-			//query = ['use "http://', url, 'yql_page_fetch.xml" as MyTable; select * from MyTable where url="http://finance.yahoo.com/quotes/',
-			//		tickers.stocks.join(','), ",", tickers.options.join(","), '/view/dv" and  xpath="//div[@id=\'yfi-main\']"'].join('');
 			url = ["http://finance.yahoo.com/quotes/", tickers.stocks.join(','), ",", tickers.options.join(","), "/view/dv"].join('');
 			console.log("Downloading detailed quotes.\nQuery: " + url);
-			requestFile(url, {
+			Stock.Utils.requestFileParse(url, {
 				success: function(response) {
 					var quotes = parseDetailedView(response);
 					onQuotesDownloadedCB && onQuotesDownloadedCB(quotes);
@@ -344,17 +308,11 @@
 	}
 	function downloadRTQuotes(tickers) {
 		console.log("downloadRTQuotes");
-		var query, url; 
+		var url;
 		if (tickers && tickers.options.length > 0 || tickers.stocks.length > 0) {
-			url = window.location.host + window.location.pathname;
-			if (url.lastIndexOf("localhost") != -1 || url.lastIndexOf("127.0.0.1") != -1) {
-				url = "pair.jimming.com/money/";
-			}
-			/*query = ['use "http://', url, 'yql_page_fetch.xml" as MyTable; select * from MyTable where url="http://finance.yahoo.com/quotes/',
-					tickers.stocks.join(','), ",", tickers.options.join(","), '/view/e" and  xpath="//div[@id=\'yfi-main\']"'].join('');*/
 			url = ["http://finance.yahoo.com/quotes/", tickers.stocks.join(','), ",", tickers.options.join(","), "/view/e"].join('');
 			console.log("Downloading RT quotes.\nQuery: " + url);
-			requestFile(url, {
+			Stock.Utils.requestFileParse(url, {
 				success: function(response) {
 					var quotes = parseRTView(response);
 					onQuotesDownloadedCB && onQuotesDownloadedCB(quotes);
@@ -364,15 +322,9 @@
 	}
 	function downloadSingleQuote(ticker, cb) {
 		console.log("downloadSingleQuote for " + ticker);
-		var query, url; 
-		url = window.location.host + window.location.pathname;
-		if (url.lastIndexOf("localhost") != -1 || url.lastIndexOf("127.0.0.1") != -1) {
-			url = "pair.jimming.com/money/";
-		}
-		//query = ['use "http://', url, 'yql_page_fetch.xml" as MyTable; select * from MyTable where url="http://finance.yahoo.com/q?s=',
-		//			ticker, '" and  xpath="//div[@id=\'yfi_investing_content\']"'].join('');
+		var url;
 		url = "http://finance.yahoo.com/q?s=" + ticker + "&rand=" + (new Date()).getTime();
-		requestFile(url, {
+		Stock.Utils.requestFileParse(url, {
 				success: function(response) {
 					var quote = parseSingleQuoteView(ticker, response);
 					//onQuotesDownloadedCB && onQuotesDownloadedCB([quote]);
@@ -384,7 +336,7 @@
 	function getTopNews(callback) {
 		var query = 'select * from rss where url="http://hosted.ap.org/lineups/BUSINESSHEADS-rss_2.0.xml?SITE=NHPOR&SECTION=HOME"';
 		var url = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query) + "&format=json&rand=" + (new Date()).getTime();
-		requestFileXHR(url, {
+		Stock.Utils.requestFileXHR(url, {
 				success: function(response) {
 					try {
 						var news = JSON.parse(response);
@@ -396,90 +348,31 @@
 				}
 			});
 	}
-	function getNews(stocks, callback) {
-		if (stocks) {
-			query = ['select * from rss where url="http://articlefeeds.nasdaq.com/nasdaq/symbols?symbol=', stocks.replace(/\^/gi, "%5E"),'"'].join('');
-			var url = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query) + "&format=json&rand=" + (new Date()).getTime();
-			requestFileXHR(url, {
-					success: function(response) {
-						try {
-							var news = JSON.parse(response);
-							callback && callback(news.query.results.item, stocks);
-						}
-						catch(e) {
-							
-						}
+
+	function getNews(stock, callback) {
+		var query = ['select * from rss where url="http://finance.yahoo.com/rss/headline?s=', stock.replace(/\^/gi, "%5E"),'"'].join(''),
+		requestUrl = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query)  + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&rand=" + (new Date()).getTime();
+		console.log(query);
+		Stock.Utils.requestFileXHR(requestUrl, {
+				success: function(response) {
+					var results = null;
+					try {
+						var json = JSON.parse(response);
+						results = json.query.results.item;
 					}
-				});
-		}
+					catch(e) {
+					}
+					callback && callback(results, stock);
+				}
+			});
 		return false;
 	}
-	function getNewsContent(url, callback) {
-		var query = ['select * from htmlstring where url="' + url + '" and  xpath="//div[@id=\'wide-main-content\']"'].join('');
-		var requestUrl = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query)  + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&rand=" + (new Date()).getTime();
-		requestFileXHR(requestUrl, {
-			success: function(response) {
-				var item = {
-					symbols: []
-				};
-				try {
-					var i, nodes, el, elContent, newsContent = [], html = JSON.parse(response);
-					// Neuter all the img tags and script tags
-					html = html.query.results.result.replace(/src=\"http/g,'src2="http').replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-					elContent = convertToDom(html);
 
-					// Extract author and date
-					el = elContent.querySelector("h1");
-					item.title = el && el.innerText.trim();
-					el = elContent.querySelector(".dateCreated [rel=author]");
-					item.publisher = el && el.innerText.trim();
-					el = elContent.querySelector(".dateCreated [content]");
-					item.pubDate = el && el.innerText.trim();
-					item.date = new Date(item.pubDate);
 
-					// Convert all the a tag into <b> and extract referenced stocks
-					nodes = elContent.querySelectorAll("#wide-main-content p a");
-					for(i=0; i < nodes.length; i++) {
-						el = nodes[i];
-						var text = el.innerText.trim();
-						if (el.href.indexOf("http://www.nasdaq.com/symbol/") == 0) {
-							item.symbols.push(text);
-							el.remove();
-						}
-						else if (text.length = 0) {
-							el.remove();
-						}
-						else {
-							elChild = document.createElement("b");
-							elChild.innerText = text;
-							el.parentNode.replaceChild(elChild, el);
-						}
-					}
-
-					nodes = elContent.querySelectorAll("#wide-main-content > p");
-					for(i=0; i<nodes.length; i++) {
-						el = nodes[i];
-						// if the paragraph content is too small it's either a chart
-						if (el.innerText.replace(/[\t,\n, ]/g, "").length > 30) {
-							newsContent.push(el.outerHTML);
-						}
-					}
-					item.content = newsContent.join("");
-				}
-				catch(e) {
-				}
-				callback && callback(item);
-			},
-			error: function() {
-				callback && callback(null);
-			}
-		});
-	}
 	Stock.Downloader = { downloadDetailedQuotes: downloadDetailedQuotes,
 		downloadRTQuotes: downloadRTQuotes,
 		downloadSingleQuote: downloadSingleQuote,
 		getTopNews: getTopNews,
-		getNewsContent: getNewsContent,
 		getNews: getNews,
 		setCallback: function(cb) { onQuotesDownloadedCB = cb; }
 	};

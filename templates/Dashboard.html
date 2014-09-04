@@ -17,38 +17,11 @@
     </div>
 </div>
 
-<div class="my_stocks" {^myStocks}hidden{/myStocks}>
-    <h3>Watchlist</h3>
-    <div class="fixed-column-container">
-        <table class="draw-border">
-            <thead>
-                <tr>
-                    <th class="headcol">Symbol</th>
-                    <th>Price</th>
-                    <th colspan="2">Day's Change</th>
-                </tr>
-            </thead>
-            <tbody>
-            {#myStocks}
-                <tr class="" data-symbol="{symbol}" data-action="viewStock">
-                    <td class="symbol headcol">{@if cond="'{symbol}'.length > 15 && '{quote.name}'"}{quote.name}{:else}{symbol}{/if}</td>
-                    <td class="price">{quote.price}</td>
-                    <td class="change {@gte key=quote.change value=0}positive{:else}negative{/gte}">{quote.change}</td>
-                    <td class="change {@gte key=quote.change value=0}positive{:else}negative{/gte}">{quote.percent-change}%</td>
-
-                </tr>
-            {/myStocks}
-            </tbody>
-        </table>
-    </div>
+<div class="my_stocks summary-list-container">
+    {#myStocks}
+    {> QuoteSumItem  /}
+    {/myStocks}
 </div>
 
-<div class="headlines" {^headlines}hidden{/headlines}>
-	<h3>Headlines</h3>
-	<ul data-role="listview">
-	{#headlines}
-		<li><a href="{link}" target="_blank">{title}</a></li>
-	{/headlines}
-	</ul>
-</div>
+{>News topNews=1/}
 

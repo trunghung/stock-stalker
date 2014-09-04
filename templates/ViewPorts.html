@@ -1,9 +1,9 @@
 <div class="my_portfolios summary-list-container">
     {#allPorts}
     <div class="heading">Net Assets: {@formatField field="marketValue" longVal="true" /}</div>
-    {> PortSumItem name="All Portfolios" label="1"/}
+    {> PortSumItem name="All Portfolios" objectId="all" hasLabel="1"/}
     {/allPorts}
     {#myPorts}
-    {> PortSumItem /}
+    {> PortSumItem  /}
     {/myPorts}
 </div>
