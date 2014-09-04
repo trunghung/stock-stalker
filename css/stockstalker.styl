@@ -305,6 +305,9 @@ table.draw-border {
 			&.negative {
 				background-color: red;
 			}
+			&.neutral {
+				background-color: rgba(0,0,0,.8);
+			}
 		}
 		.small {
 			font-size: small;
@@ -331,7 +334,31 @@ table.draw-border {
 			min-width: 75px;
 			text-align: center;
 		}
+		.mid-col-name {
+			position: absolute;
+			right: 75px;
+			top: -16px;
+			font-size: x-small;
+			min-width: 100px;
+			text-align: right;
+			padding-right: 10px;
+		}
+		.left-btn, .right-btn {
+			position: absolute;
+			top: 5px;
+		}
+		.left-btn {
+			right: 60px;
+		}
+		.right-btn {
+			right: 10px;
+		}
+	}
 
+	&:not(.show-btn) {
+		.left-btn, .right-btn {
+			display: none;
+		}
 	}
 	&:not(.show-alt) .alt2 {
 		display: none;

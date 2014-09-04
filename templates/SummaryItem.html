@@ -1,0 +1,28 @@
+<div class="summary-list-layout" data-symbol="{symbol}" data-action="viewStock">
+    <div class="row">
+        <span class="left">
+            <span class="name">{symbol}</span>
+            <span class="subtitle small">{portName}</span>
+        </span>
+        <span class="mid-col alt1">${marketValue}</span>
+        <span class="mid-col alt2"></span>
+        <span class="right-col alt1 change-box {@positive val=gain /}" data-action="toggleAlt">{gain}</span>
+        <span class="right-col alt2 change-box neutral" data-action="toggleAlt">{@formatDate dateObj="transDate" shortDate="1" /}</span>
+    </div>
+    <div class="row small">
+        <span class="mid-col alt1">{qty} x</span>
+        <span class="mid-col alt2"></span>
+        <span class="change-val right-col alt1" data-action="toggleAlt">{?price}${price}{:else}N/A{/price}</span>
+        {#expiration}
+        <span class="change-val right-col alt2" data-action="toggleAlt">{@formatDate dateObj="expiration" shortDate="1" /}</span>
+        {/expiration}
+    </div>
+    {?hasLabel}
+    <div class="col-name alt1">Profit / Paid</div>
+    <div class="col-name alt2">Trans Date</div>
+    <div class="mid-col-name alt1">Mkt Val / Shares</div>
+    <div class="mid-col-name alt2">Paid Price</div>
+    {/hasLabel}
+    <a href="#" data-action="sellLot" data-lot="{objectId}" class="left-btn ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-notext">Delete</a>
+    <a href="#" data-action="viewEditTrans" data-lot="{objectId}" class="right-btn ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-edit ui-btn-icon-notext">Edit</a>
+</div>

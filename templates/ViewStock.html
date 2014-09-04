@@ -84,44 +84,20 @@
 </div>
 
 
-<div class="lots scroll-container">
-    <table class="draw-border" portId="{port_id}">
-        <tr class="row">
-            <th class="left">Portfolio</td>
-            <th class="left">Symbol</td>
-            <th class="">Shares</td>
-            <th class="">Paid</td>
-            <th class="">Gain</td>
-            <th class="">Value</td>
-            <th class="">Date</td>
-        </tr>
-        {#portLotsInfo}
-        {#portLots}
-        {#lots portName=port.name}
-        <tr class="row" data-id="{objectId}">
-            <td class="left">{portName}</td>
-            <td class="left">{symbol}</td>
-            <td class="value shares">{qty}</td>
-            <td class="value price">{price}</td>
-            <td class="value price gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
-            <td class="value value market-value">${marketValue}</td>
-            <td class="value">{@formatDate dateObj="transDate" shortDate="1" /}</td>
-            <td class="value">
-                <a href="#" data-action="sellLot" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-notext">Delete</a>
-                <a href="#" data-action="viewEditTrans" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-edit ui-btn-icon-notext">Edit</a>
-            </td>
-        </tr>
-        {/lots}
-        {/portLots}
 
-        <tr class="row" data-id="{objectId}">
-            <td class="value symbol" colspan="4">Total</td>
-            <td class="value price gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
-            <td class="value value market-value">${marketValue}</td>
-            <td class="value value" colspan="2"></td>
-        </tr>
-        {/portLotsInfo}
-    </table>
+<div class="my_portfolios summary-list-container">
+    <a href="#" data-action="toggleOverlayBtns" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-edit">Edit</a>
+    {#portLotsInfo}
+    {#portLots}
+    {#lots portName=port.name curRow=$idx}
+    {@if cond="{$idx} == 0 && {curRow} == 0"}
+    {> SummaryItem  hasLabel=1/}
+    {:else}
+    {> SummaryItem /}
+    {/if}
+    {/lots}
+    {/portLots}
+    {/portLotsInfo}
 </div>
 
 {>News /}

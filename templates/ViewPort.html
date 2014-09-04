@@ -24,6 +24,15 @@
 </div>
 {/port}
 
+<div class="my_portfolios summary-list-container">
+    {#lots}
+    {@if cond="{$idx} == 0"}
+    {> CombinedLotItem  hasLabel=1/}
+    {:else}
+    {> CombinedLotItem /}
+    {/if}
+    {/lots}
+</div>
 
 <table class="lots full-width draw-border">
     <tr class="header">

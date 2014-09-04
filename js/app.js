@@ -349,6 +349,15 @@
 						el.classList.add("show-alt");
 				}
 				break;
+			case "toggleOverlayBtns":
+				var el = getAncestor(e.target, ".summary-list-container");
+				if (el) {
+					if (el.classList.contains("show-btn"))
+						el.classList.remove("show-btn");
+					else
+						el.classList.add("show-btn");
+				}
+				break;
 			case "AddPort":
 				onAddPortSubmit(e);
 				break;
