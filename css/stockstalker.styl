@@ -1,8 +1,9 @@
 body * {
 	font-family: Helvetica, 'Nokia Sans', Arial, Sans-serif;
-	.ui-page {
-		-webkit-user-select: none;
-	}
+
+}
+.ui-page {
+	-webkit-user-select: none;
 }
 .ui-page .ui-content {
 	padding: 5px;
@@ -124,7 +125,7 @@ table.draw-border {
 	}
 }
 [data-action]:hover, [data-action]:hover td {
-	background-color : rgba(0,0,0,0.1);
+	background-color : #DDDDDD;
 }
 
 #Login {
@@ -233,9 +234,28 @@ table.draw-border {
 
 }
 
-
+.earnings {
+	padding: 10px 0;
+}
+.xx-large-title {
+	font-size: xx-large;
+	padding: 10px 0;
+}
+.x-large-title {
+	font-size: x-large;
+	padding: 5px 0;
+}
 #ViewPort {
+	.port_summary {
 
+		.item {
+			padding: 3px 0;
+			.label {
+				display: inline-block;
+				min-width: 90px;
+			}
+		}
+	}
 }
 
 #footer {
@@ -269,6 +289,12 @@ table.draw-border {
 	}
 }
 .summary-list-container {
+	padding: 10px 0;
+	> .headline {
+		font-size: medium;
+		font-weight: bold;
+		margin: 10px 0 15px 0;
+	}
 	.summary-list-layout {
 		position: relative;
 		border-top: 1px solid #DDD;

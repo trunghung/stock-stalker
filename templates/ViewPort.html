@@ -1,86 +1,33 @@
-{#port}
-<div class="port_summary" data-id="{objectId}">
-	<div class="round_block" >
-	    <div class="block header lighter_bg">
-		   <h2 class="name">{name}<span class="market-value value right-align">{@getPortInfo field="market-value" /}</span></h2> 
-	    </div>
-	    <div class="block content">
-		   <table class="content row">
-			  <tr class="cash_balance">
-				 <td><div class="label">Cash Balance</div></td>
-				 <td><div class="value info">{cash}</div></td>
-			  </tr>
-			  <tr class="gain">
-				 <td><div class="label">Gain/Loss</div></td>
-				 <td><div class="value info">{@getPortInfo field="gain" /}</div></td>
-			  </tr>
-			  <tr class="value-delta">
-				 <td><div class="label">Day Change</div></td>
-				 <td><div class="value info">{@getPortInfo field="value-delta" /}</div></td>
-			  </tr>
-		   </table>
-	    </div>
-	</div>
+
+<div class="port_summary" data-id="{port.objectId}">
+    <div class="large-title">{#lotsInfo}{@formatField field="marketValue" longVal=1/}{/lotsInfo}</div>
+
+    <div class="item">
+        <span class="label">Day's Gain</span>
+        <span class="value info {@positive val=lotsInfo.valueDelta /}">{#lotsInfo}{@formatField field="valueDelta" longVal=1 /} ({valueDeltaPercent}%){/lotsInfo}</span>
+    </div>
+    <div class="item">
+         <span class="label">Total Gain</span>
+         <span class="value info {@positive val=lotsInfo.gain /}">{#lotsInfo}{@formatField field="gain" /} ({gainPercent}%){/lotsInfo}</span>
+    </div>
+    <div class="item">
+        <span class="label">Cash</span>
+        <span class="value info {@positive val=port.cash /}">{port.cash}</span>
+    </div>
 </div>
-{/port}
 
 <div class="my_portfolios summary-list-container">
+    {#lotsInfo}
     {#lots}
     {@if cond="{$idx} == 0"}
-    {> CombinedLotItem  hasLabel=1/}
+    {> CombinedLotItem  hasLabel=1 showPortName=showPortName /}
     {:else}
-    {> CombinedLotItem /}
+    {> CombinedLotItem showPortName=1 /}
     {/if}
     {/lots}
+    {/lotsInfo}
 </div>
 
-<table class="lots full-width draw-border">
-    <tr class="header">
-        <th class="header title">Symbol</th>
-        <th class="header title info">Price</th>
-        <th class="header title info">Change</th>
-        <th class="header title info">Shares</th>
-        <th class="header title info">Day's Change</th>
-        <th class="header title info">Price Paid</th>
-        <th class="header title info">Gain/Loss</th>
-        <th class="header title info">Value</th>
-        <th class="header title info">Date</th>
-        <th class="header title info"></th>
-    </tr>
-    {#lots}
-    <tr class="group_content entry" data-symbol="{symbol}" data-lot="{objectId}" data-action="viewStock">
-        <td class="symbol">{symbol}</td>
-        <td class="price">{#quote}{price}{/quote}</td>
-        <td class="change {@gt key=quote.change value=0}positive{:else}negative{/gt}">{quote.change} ({quote.percent-change}%)</td>
-        <td class="qty">{qty}</td>
-        <td class="value-delta {@gt key=valueDelta value=0}positive{:else}negative{/gt}">{valueDelta}</td>
-        <td class="cost">{price}</td>
-        <td class="gain {@gt key=gain value=0}positive{:else}negative{/gt}">{gain}</td>
-        <td class="value">{marketValue}</td>
-        <td class="value">{@formatDate dateObj="transDate" shortDate="1" /}</td>
-        <!--td class="value">
-            <a href="#" data-action="sellLot" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-delete ui-btn-icon-notext">Delete</a>
-            <a href="#" data-action="viewEditTrans" data-lot="{objectId}" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-edit ui-btn-icon-notext">Edit</a>
-        </td-->
-
-    </tr>
-    {/lots}
-    {#port}
-    <tr class="cash entry" sym="{symbol}" data-id="{objectId}" data-action="viewLot">{~n}
-        <td class="symbol" colspan="7">Cash</td>
-        <td class="value {@gt key=cash value=0}positive{:else}negative{/gt}" >${cash}</td>
-        <td ></td>
-    </tr>
-    <tr class="total entry" sym="{symbol}" data-id="{objectId}" data-action="viewLot">{~n}
-        <td class="symbol" colspan="4"><b>Total</b></td>
-        <td class="value-delta">{@getPortInfo field="valueDelta" /}</td>
-        <td class="cost"></td>
-        <td class="gain {@gt key=gain value=0}positive{:else}negative{/gt}">{@getPortInfo field="gain" /}</td>
-        <td class="value" colspan=>${@getPortInfo field="marketValue" /}</td>
-        <td ></td>
-    </tr>
-    {/port}
-</table>
 
 {#port}
 <a class="ui-btn" data-action="setPortCash" data-id="{objectId}">Update Cash</a>

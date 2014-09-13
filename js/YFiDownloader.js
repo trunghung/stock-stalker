@@ -23,11 +23,32 @@
 		}
 		return ret;
 	}
+	function toFixed(val) {
+		return Math.round(val*100)/100;
+	}
+
+	function parseMSNMoney(response) {
+		var el = Stock.Utils.convertToDom(response);
+		if (!el) return [];
+
+
+		var quote = {};
+		quote.name = el.querySelector("h1 a").innerText.trim();
+		var symbol = el.querySelector(".ex").innerText.replace(/[ ,(,)]/g, "").split(":");
+		quote.symbol = symbol[1].replace(/\//g, ".");
+		if (symbol[0])
+			quote.xchange = symbol[0];
+		quote.price = parseFloat(el.querySelector(".lp").innerText.trim());
+		quote.change = parseFloat(el.querySelector(".chg").innerText.trim());
+		quote["percent-change"] = toFixed(100*quote.change/(quote.price - quote.change));
+
+		return [quote]
+	}
 
 	function parseDetailedView(response) {
-		var quotes = [], range, change,
+		var quotes = [], range, change, entry,
 		el = Stock.Utils.convertToDom(response);
-		if (!el) return { quotes: quotes, news: []};
+		if (!el) return [];
 			
 		var entries = el.querySelectorAll(".yfi_summary_table");
 		for (var i=0; i < entries.length; i++) {
@@ -164,46 +185,13 @@
 			//console.log("Parsed quote result: " + JSON.stringify(quote));
 			quotes.push(quote);
 		}
-		return { quotes: quotes, news: []};
-	}
-	function parseNews(elRoot) {
-		var news = [], elCite, elTime, elDesc, elTitle, i,j;
-		var entries = elRoot.querySelectorAll("#yfi-recent-news tr");
-		for (i=0; i < entries.length; i++) {
-			entry = entries[i];
-			newsItem = { quotes: [], title: "", url: "", cite: "", time: "" };
-			var symbols = entry.querySelectorAll("td.symbol ul a");
-			for (j=0; j < symbols.length; j++) {
-				newsItem.quotes.push(symbols[j].innerText);
-			}
-			elDesc = entry.querySelector("td:not(.symbol)");
-			if (elDesc) {
-				elCite = elDesc.querySelector("cite");
-				elTime = elDesc.querySelector("span");
-				elTitle = elDesc.querySelector("a");
-				if (elCite && elTime && elTitle) {
-					newsItem.cite = elCite.innerText.trim();
-					newsItem.time = elTime.innerText.trim();
-					newsItem.title = elTitle.innerText.trim();
-					newsItem.link = elTitle.getAttribute("href");
-					
-					// skip paid article and video
-					if (newsItem.title.indexOf("[$$]") == -1 && newsItem.title.indexOf("[video]") == -1) {
-						//console.log("Add news item: " + JSON.stringify(newsItem));
-						news.push(newsItem);
-					}
-				}
-			}
-			
-		}
-		return news;
+		return quotes;
 	}
 	function parseRTView(response) {
-		var quotes = [], news = [], range, change, info, quote,
+		var quotes = [], range, change, info, quote,
 		el = Stock.Utils.convertToDom(response);
-		if (!el) return {quotes: quotes, news: news};
-		
-		news = parseNews(el);
+		if (!el) return [];
+
 		var entries = el.querySelectorAll("table.yfi_portfolios_multiquote tr");
 		console.log("Downloaded quotes for " + entries.length);
 		for (var i=0; i < entries.length; i++) {
@@ -230,7 +218,7 @@
 			//console.log("Parsed quote result: " + JSON.stringify(quote));
 			quotes.push(quote);
 		}
-		return {quotes: quotes, news: news};
+		return quotes;
 	}
 	// sample
 	// ETF: IVV, OPTIONS: yhoo150117c00025000, MF: fcntx
@@ -239,6 +227,7 @@
 		elRoot = Stock.Utils.convertToDom(response), el;
 		if (!elRoot) return null;
 		el = elRoot.querySelector("#yfi_investing_content .yfi_rt_quote_summary");
+		if (!el) return null;
 		elInfo = el.querySelector(".time_rtq_ticker span");
 		if (elInfo) quote.price = parseFloat(elInfo.innerText.replace(/,/g, ""));
 		
@@ -319,6 +308,27 @@
 				}
 			});
 		}
+		if (tickers && tickers.warrants.length > 0) {
+			for (var i=0; i < tickers.warrants.length; i++) {
+				var warrant = tickers.warrants[i].replace(/\./g, "%2f"),
+					url = ["http://investing.money.msn.com/investments/stock-price?Symbol=", warrant].join(''),
+					query = ['select * from htmlstring where url="' + url + '" and  xpath="//div[@id=\'subhead\']"'].join('');
+				var requestUrl = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query) + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&rand=" + (new Date()).getTime();
+				console.log(query);
+				Stock.Utils.requestFileXHR(requestUrl, {
+					success: function (response) {
+						try {
+							response = JSON.parse(response);
+							var quotes = parseMSNMoney(response.query.results.result);
+							onQuotesDownloadedCB && onQuotesDownloadedCB(quotes);
+						}
+						catch (e) {
+						}
+					}
+				});
+			}
+		}
+
 	}
 	function downloadSingleQuote(ticker, cb) {
 		console.log("downloadSingleQuote for " + ticker);

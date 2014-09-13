@@ -220,7 +220,7 @@
 	}
 
 	function onClick(e) {
-		var info = getDataAction(e.target, 2),
+		var info = getDataAction(e.target, 4),
 			handled = true;
 		switch(info.action) {
 			case "login":
@@ -310,6 +310,10 @@
 				if (renderViewNews()) {
 					$.mobile.navigate("#ViewNews");
 				}
+				break;
+			case "viewMarket":
+				renderViewMarket();
+				$.mobile.navigate("#ViewMarket");
 				break;
 			case "viewDashboard":
 				$.mobile.navigate("#Dashboard");
@@ -405,9 +409,15 @@
 
 	function renderViewStock(symbol, portId) {
 		if (symbol) {
-			var start = new Date();
+			var start = new Date(),
+				symbols = Stock.Portfolios.getAllRelatedSymbols(symbol),
+				lotsBySumbols = [];
+			symbols.forEach(function(symbol) {
+				lotsBySumbols.push(Stock.Portfolios.getAllLots({symbol: symbol, portId: portId }));
+			});
+
 			var context = {
-				portLotsInfo : Stock.Portfolios.getLotsGroupedByPort({symbol: symbol, portId: portId }),
+				lotsBySumbols : lotsBySumbols,
 				quote : Stock.QuoteManager.quotes[symbol],
 				headlines : Stock.QuoteManager.getNews(symbol)
 			};
@@ -430,21 +440,32 @@
 		return false;
 	}
 
+	function setTitle(elRoot, name) {
+		elRoot.querySelector("#header .header-title").innerText = name;
+	}
+
 	function renderViewPort(portId) {
-		var start = new Date();
+		var start = new Date(),
+			showPortName = false;
 		var port = null,
-			lots = Stock.Portfolios.getCombinedLots({ portId: portId, getSublots: true });
+			//lots = Stock.Portfolios.getCombinedLots({ portId: portId, getSublots: true });
+			lots = Stock.Portfolios.getAllLots({ portId: portId });
 
 		if (portId == "all") {
+			showPortName = true;
 			port = { objectId: "all", name: "All Portfolios", cash: Stock.Portfolios.getAllCash()};
 		}
 		else {
 			port = Stock.Portfolios.portfolios.get(portId);
 		}
 		if (port) {
-			var context = { port: port.toJSON ? port.toJSON() : port, lots: lots };
+			var context = {
+				port: port.toJSON ? port.toJSON() : port,
+				lotsInfo: lots,
+				showPortName: showPortName
+			};
 
-			context.lots.sort(function(a, b) {
+			context.lotsInfo.lots.sort(function(a, b) {
 				// Sort lots by name then value
 				if (a.symbol == b.symbol) {
 					return (a.marketValue || b.marketValue) ? b.marketValue - a.marketValue : 0;
@@ -458,6 +479,7 @@
 			var page = document.querySelector("#ViewPort");
 			if (page) {
 				page.dataset.port_id = portId;
+				setTitle(page, context.port.name);
 			}
 
 			//alert("Render time: " + ((new Date()).getTime() - start.getTime()) + "ms");
@@ -559,21 +581,30 @@
 			else
 				return a.name > b.name ? 1 : (a.name == b.name ? 0 : -1);
 		});
+		context.header = "Portfolios";
 		renderPage("ViewPorts", "ViewPorts", context);
 		return true;
 	}
 	function renderViewNews() {
-		var context = { headlines: Stock.QuoteManager.getStocksNews() };
+		var context = { headlines: Stock.QuoteManager.getStocksNews(),
+		header: "News"
+		};
 		renderPage("News", "ViewNews", context);
+		return true;
+	}
+	function renderViewMarket() {
+		var context = { topNews: 1, header: "Top News" };
+		var news = Stock.QuoteManager.getTopNews();
+		if (news.length > 0)
+			context.headlines = news;
+		renderPage("Market", "ViewMarket", context);
 		return true;
 	}
 	function renderDashboard() {
 		var context = { };
-		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: false });
+		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: true });
 		context.earnings = Stock.QuoteManager.getEarnings();
-		var news = Stock.QuoteManager.getTopNews();
-		if (news.length > 0)
-			context.headlines = news;
+
 		context.myPorts = [];
 		var portContext = getPortContext("all");
 		if (portContext)
@@ -612,6 +643,9 @@
 				break;
 			case "ViewNews":
 				renderViewNews();
+				break;
+			case "ViewMarket":
+				renderViewMarket();
 				break;
 		}
 	}

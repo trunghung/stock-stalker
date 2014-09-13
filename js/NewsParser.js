@@ -74,7 +74,6 @@
 			xpath: "//div[contains(@class, \'mastertextCenter\')]",
 			title: "h1",
 			author: "h3.byline",
-			useParse: true,
 			paragraphs: ".articlePage > p, .articlePage > b, .articlePage ul, .articlePage blockquote",
 			atags: ".articlePage > p a, .articlePage > b a, .articlePage ul a, .articlePage blockquote a"
 		}

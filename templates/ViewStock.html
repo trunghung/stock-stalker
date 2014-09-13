@@ -65,7 +65,7 @@
 </div>
 {/quote}
 
-<div class="viewChart tab_content round_block" hidden>
+<div class="viewChart tab_content round_block">
 	{#quote}
 	<div class="block header dark_bg">
 		<label class="name">{name}</label> <label class="symbol">({symbol})</label>
@@ -87,17 +87,22 @@
 
 <div class="my_portfolios summary-list-container">
     <a href="#" data-action="toggleOverlayBtns" class="ui-btn ui-btn-inline ui-corner-all ui-btn-a ui-icon-edit">Edit</a>
-    {#portLotsInfo}
-    {#portLots}
-    {#lots portName=port.name curRow=$idx}
-    {@if cond="{$idx} == 0 && {curRow} == 0"}
+    {#lotsBySumbols curSymbol=quote.symbol}
+    {@if cond="'{symbol}' != '{curSymbol}'"}
+    <div class="headline">{#quote}{name} ({symbol}){:else}{symbol}{/quote}</div>
+    {/if}
+    {#lots}
+    {@if cond="{$idx} == 0"}
     {> SummaryItem  hasLabel=1/}
     {:else}
     {> SummaryItem /}
     {/if}
     {/lots}
-    {/portLots}
-    {/portLotsInfo}
+    {@gt key=count value=1}
+    {> SummaryItem title="Total" /}
+    {/gt}
+    {/lotsBySumbols}
+
 </div>
 
 {>News /}

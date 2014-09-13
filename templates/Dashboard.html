@@ -1,15 +1,15 @@
 <div class="my_portfolios" {^myPorts}hidden{/myPorts}>
     {#allPorts}
-    <div class="heading">{@formatField field="marketValue" longVal="true" /}</div>
-    <div>Day's Change: <span class="change {@gte key=valueDelta value=0}positive{:else}negative{/gte}">{valueDelta} ({valueDeltaPercent}%)</span></div>
-    <div>Total Gain: <span class="change {@gte key=gain value=0}positive{:else}negative{/gte}">{gain} ({gainPercent}%)</span></div>
-    <div>Cash balance: ${cash}</div>
+    <div class="x-large-title">{@formatField field="marketValue" longVal="true" /}</div>
+    <div>Day's Change: <span class="change {@positive val=valueDelta /}">{@formatField field="valueDelta" longVal=1 /} ({valueDeltaPercent}%)</span></div>
+    <div>Total Gain: <span class="change {@positive val=gain /}">{@formatField field="gain" /} ({gainPercent}%)</span></div>
+    <div>Cash balance: <span class="{@positive val=port.cash /}">{cash}</span></div>
     {/allPorts}
 
 </div>
 
 <div class="earnings" {^earnings}hidden{/earnings}>
-    <h3>Upcoming Earnings</h3>
+    <div class="x-large-title">Upcoming Earnings</div>
     <div>
         {#earnings}
         <div>{symbol} - <span class="date">{@formatEarningDate dateStr="earningsDate" dateObj="earningsDateObj" /}</span></div>
@@ -23,5 +23,4 @@
     {/myStocks}
 </div>
 
-{>News topNews=1/}
 

@@ -106,13 +106,19 @@
 			cash = port ? port.get("cash") : Stock.Portfolios.getAllCash();
 
 		if (field == "marketValue") {
-			chunk.write(formatTagValue(cash + tallyLotsValue(lots, "price"), format, true));
+			return chunk.write(formatTagValue(cash + tallyLotsValue(lots, "price"), format, true));
 		}
 		else if (field == "valueDelta") {
-			chunk.write(formatTagValue(tallyLotsValue(lots, "change"), format, true));
+			return chunk.write(formatTagValue(tallyLotsValue(lots, "change"), format, true));
 		}
 		else if (field == "gain") {
-			chunk.write(formatTagValue(tallyLotsValue(lots, "price") - tallyLotsCost(lots), format, true));
+			return chunk.write(formatTagValue(tallyLotsValue(lots, "price") - tallyLotsCost(lots), format, true));
+		}
+		else {
+			var val = port.get("field");
+			if (val != undefined) {
+				return chunk.write(val);
+			}
 		}
 		return chunk.write("");
     };

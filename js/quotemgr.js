@@ -91,15 +91,11 @@
 		
 		if (info.options.length > 0 || info.stocks.length > 0) {
 			var downloaded = 1;
-			Stock.Downloader.setCallback(function(results) {
-				parseResults(results.quotes);
+			Stock.Downloader.setCallback(function(quotes) {
+				parseResults(quotes);
 				downloaded++;
 				if (downloaded >= 2) {
-					onQueryResult(results.quotes);
-				}
-				if (results.news.length > 0) {
-					_news = results.news;
-					quoteMgr.trigger('newsDownloaded', _news);
+					onQueryResult(quotes);
 				}
 			});
 			// do a full fetch once an hour
