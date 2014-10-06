@@ -23,25 +23,21 @@
 		}
 		return ret;
 	}
-	function toFixed(val) {
-		return Math.round(val*100)/100;
-	}
 
-	function parseMSNMoney(response) {
+	function parseWarrantQuote(response) {
 		var el = Stock.Utils.convertToDom(response);
 		if (!el) return [];
 
-
 		var quote = {};
-		quote.name = el.querySelector("h1 a").innerText.trim();
-		var symbol = el.querySelector(".ex").innerText.replace(/[ ,(,)]/g, "").split(":");
-		quote.symbol = symbol[1].replace(/\//g, ".");
+		quote.name = el.querySelector("#qwidget_pageheader h1").innerText.replace(" Stock Quote & Summary Data", "").trim();
+		quote.symbol = el.querySelector(".qwidget-symbol p").innerText.replace(/\//g, ".").trim();
+	/*.replace(/[ ,(,)]/g, "").split(":");
+		quote.symbol = symbol[1];
 		if (symbol[0])
-			quote.xchange = symbol[0];
-		quote.price = parseFloat(el.querySelector(".lp").innerText.trim());
-		quote.change = parseFloat(el.querySelector(".chg").innerText.trim());
+			quote.xchange = symbol[0];*/
+		quote.price = parseFloat(el.querySelector("#qwidget_lastsale p").innerText.replace("$", "").trim());
+		quote.change = parseFloat(el.querySelector("#qwidget_netchange p").innerText.trim());
 		quote["percent-change"] = toFixed(100*quote.change/(quote.price - quote.change));
-
 		return [quote]
 	}
 
@@ -310,16 +306,16 @@
 		}
 		if (tickers && tickers.warrants.length > 0) {
 			for (var i=0; i < tickers.warrants.length; i++) {
-				var warrant = tickers.warrants[i].replace(/\./g, "%2f"),
-					url = ["http://investing.money.msn.com/investments/stock-price?Symbol=", warrant].join(''),
-					query = ['select * from htmlstring where url="' + url + '" and  xpath="//div[@id=\'subhead\']"'].join('');
+				var warrant = tickers.warrants[i].replace(/\./g, "-"),
+					url = ["http://www.nasdaq.com/symbol/", warrant].join(''),
+					query = ['select * from htmlstring where url="' + url + '" and  xpath="//div[@id=\'qwidget-quote-wrap\']"'].join('');
 				var requestUrl = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent(query) + "&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&rand=" + (new Date()).getTime();
 				console.log(query);
 				Stock.Utils.requestFileXHR(requestUrl, {
 					success: function (response) {
 						try {
 							response = JSON.parse(response);
-							var quotes = parseMSNMoney(response.query.results.result);
+							var quotes = parseWarrantQuote(response.query.results.result);
 							onQuotesDownloadedCB && onQuotesDownloadedCB(quotes);
 						}
 						catch (e) {

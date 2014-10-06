@@ -302,13 +302,29 @@
 		});
 		return output;
 	}
-	function isOptionOfStock(symbol, optionSymbol) {
-		return optionSymbol && symbol && optionSymbol.length > 15 &&
+	function isDerivativeOfStock(symbol, optionSymbol) {
+		return (isOption(optionSymbol) && symbol &&
 			optionSymbol.length == symbol.length + 15 &&
-			optionSymbol.indexOf(symbol) == 0;
+			optionSymbol.indexOf(symbol) == 0) ||
+			(optionSymbol.indexOf(symbol + ".WS") == 0);
 	}
 	function isOption(symbol) {
-		return symbol.length > 15;
+		return symbol && symbol.length > 15;
+	}
+	function getWatchList(params) {
+		var watchlist = [], added = {};
+		_lots.forEach(function(lot) {
+			sym = lot.get("symbol");
+			if (params && params.ignoreOptions && isOption(sym)) {
+				return;
+			}
+			if (!added[sym]) {
+				watchlist.push({ symbol: sym,
+					quote: Stock.QuoteManager.quotes[sym]});
+				added[sym] = true;
+			}
+		});
+		return watchlist;
 	}
 	function getCombinedLots(params) {
 		var combinedLots = [], added = {},
@@ -351,14 +367,16 @@
 		for (sym in added) {
 			combinedLots.push(prepLotContext(added[sym]));
 		}
-		return combinedLots;
+		var context = calculateTotalInfo(combinedLots);
+		context.lots = combinedLots;
+		return context;
 	}
 	// Return all related options or warrant to the provided symbol
 	function getAllRelatedSymbols(symbol, portId) {
 		var symbols = [symbol],
 			added = {};
 		var lots = _lots.filter(function(lot) {
-			return isOptionOfStock(symbol, lot.attributes.symbol) &&
+			return isDerivativeOfStock(symbol, lot.attributes.symbol) &&
 				// If port is provided, we will only return lots for that port
 				(!portId || portId == "all" || lot.attributes.portId == portId);
 		});
@@ -370,6 +388,30 @@
 			}
 		});
 		return symbols;
+	}
+	function calculateTotalInfo(lots) {
+		var totalMktVal = 0,
+			totalGain = 0,
+			totalValueDelta = 0,
+			totalCost = 0,
+			totalQty = 0;
+		lots.forEach(function(lot) {
+			totalValueDelta += lot.valueDelta;
+			totalMktVal += lot.marketValue;
+			totalGain += lot.gain;
+			totalQty += lot.qty;
+			totalCost += lot.qty * lot.price;
+		});
+		return {
+			marketValue: totalMktVal,
+			gain: totalGain,
+			gainPercent: toFixed(totalGain*100/(totalMktVal-totalGain)),
+			qty: totalQty,
+			cost: totalCost,
+			price: toFixed(totalCost/totalQty),
+			valueDelta: totalValueDelta,
+			valueDeltaPercent: toFixed(totalValueDelta*100/(totalMktVal-totalValueDelta)),
+			count: lots.length};
 	}
 	function getLotsGroupedByPort(params) {
 		var combinedLots = [],
@@ -418,13 +460,10 @@
 			portLots: combinedLots,
 			count: combinedLots.length};
 	}
-	function toFixed(val) {
-		return Math.round(val*100)/100;
-	}
 	function getAllLots(params) {
 		var lots = [],
-			symbol = params.symbol,
-			portId = params.portId,
+			symbol = params ? params.symbol : undefined,
+			portId = params ? params.portId : undefined,
 			totalMktVal = 0,
 			totalGain = 0,
 			totalValueDelta = 0,
@@ -465,7 +504,7 @@
 	
 	function getPortLots(portId, combineLots) {
 		if (combineLots) {
-			return prepLotsContext(getCombinedLots({ portId: portId }));
+			return getCombinedLots({ portId: portId });
 		}
 		else {
 			if (portId == "all")
@@ -505,7 +544,8 @@
 		getCombinedLots: getCombinedLots,
 		getLotsGroupedByPort: getLotsGroupedByPort,
 		getAllLots: getAllLots,
-		getAllRelatedSymbols: getAllRelatedSymbols
+		getAllRelatedSymbols: getAllRelatedSymbols,
+		getWatchList: getWatchList
 	};
 	_.extend(Stock.Portfolios, Parse.Events);
 	init();

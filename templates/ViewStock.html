@@ -6,18 +6,38 @@
 
 	<div class="quote">
         <div class="h1 price">{price}</div>
+        {?marketValue}
+        <div class="changes">
+            <span class="value">
+                <span class="label">Market Value:</span>
+                <span class="">{@formatField field="marketValue"/}</span>
+            </span>
+        </div>
+        {/marketValue}
         <div class="changes">
             <span class="change">
                 <span class="label">{^priceAH}Day's Change{:else}Today's Close{/priceAH}:</span>
-                <span class="{@gt key=change value=0}positive{:else}negative{/gt}">{@formatField field="change"/} ({@formatField field="percent-change" /})</span>
+                <span class="{@positive val=change /}">{@formatField field="change"/} ({@formatField field="percent-change" /})</span>
             </span>
             {?priceAH}
             <span class="change changeAH">
                 <span class="label">After Hour:</span>
-                <span class="{@gt key=changeAH value=0}positive{:else}negative{/gt}">{@formatField field="changeAH" format="change"/} ({@formatField field="percent_changeAH" format="percent-change" /})</span>
+                <span class="{@positive val=changeAH /}">{@formatField field="changeAH" format="change"/} ({@formatField field="percent_changeAH" format="percent-change" /})</span>
             </span>
             {/priceAH}
         </div>
+        {?marketValue}
+        <div class="changes">
+            <span class="change">
+                <span class="label">Day's Change:</span>
+                <span class="{@positive val=valueDelta /}">{@formatField field="valueDelta"/} ({@formatField field="valueDeltaPercent" /})</span>
+            </span>
+            <span class="change changeAH">
+                <span class="label">Gain:</span>
+                <span class="{@positive val=gain /}">{@formatField field="gain"/} ({@formatField field="gainPercent" /})</span>
+            </span>
+        </div>
+        {/marketValue}
 	</div>
 	<div class="quote-details">
 		<table class="draw-border full-width">
@@ -65,6 +85,7 @@
 </div>
 {/quote}
 
+{?chart}
 <div class="viewChart tab_content round_block">
 	{#quote}
 	<div class="block header dark_bg">
@@ -82,7 +103,7 @@
 		<li class="1y tab last" view="1y"><a>1y</a></li>
 	</ul>
 </div>
-
+{/chart}
 
 
 <div class="my_portfolios summary-list-container">

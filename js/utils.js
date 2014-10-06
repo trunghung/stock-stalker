@@ -24,6 +24,13 @@ var utils = Stock.Utils = {
 			}
 		});
 	},
+	toFixed: function (val, decimalPlace) {
+		if (decimalPlace == undefined)
+			decimalPlace = 2;
+		if (decimalPlace === 0)
+			return parseInt(val);
+		return Math.round(val*100)/100;
+	},
 	requestFileXHR: function(url, callbackFn) {
 		var xmlhttp=new XMLHttpRequest();
 		xmlhttp.onreadystatechange=function() {
@@ -39,4 +46,5 @@ var utils = Stock.Utils = {
 	}
 
 };
+	window.toFixed = utils.toFixed;
 })();

@@ -1,9 +1,9 @@
-<div class="my_portfolios" {^myPorts}hidden{/myPorts}>
+<div class="my_portfolios">
     {#allPorts}
     <div class="x-large-title">{@formatField field="marketValue" longVal="true" /}</div>
     <div>Day's Change: <span class="change {@positive val=valueDelta /}">{@formatField field="valueDelta" longVal=1 /} ({valueDeltaPercent}%)</span></div>
     <div>Total Gain: <span class="change {@positive val=gain /}">{@formatField field="gain" /} ({gainPercent}%)</span></div>
-    <div>Cash balance: <span class="{@positive val=port.cash /}">{cash}</span></div>
+    <div>Cash balance: <span class="{@positive val=cash /}">{cash}</span></div>
     {/allPorts}
 
 </div>
@@ -18,8 +18,15 @@
 </div>
 
 <div class="my_stocks summary-list-container">
+    <div class="top-mover">Top Movers</div>
     {#myStocks}
-    {> QuoteSumItem  /}
+    {@lt key=$idx value=6}
+        {@if cond="{$idx} == 0"}
+        {> LotDayAndQuote  hasLabel=1 /}
+        {:else}
+        {> LotDayAndQuote/}
+        {/if}
+    {/lt}
     {/myStocks}
 </div>
 

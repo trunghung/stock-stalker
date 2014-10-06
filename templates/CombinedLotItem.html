@@ -2,7 +2,7 @@
     <div class="row">
         <span class="left">
             <span class="name">{#title}{title}{:else}{symbol}{/title}</span>
-            <span class="subtitle small">{#showPortName}{@getLotInfo field="port-name" /}{/showPortName} - {#qty}{qty} shrs @ ${price}{/qty}</span>
+            <span class="subtitle small">{#showPortName}{@getLotInfo field="port-name" /} - {/showPortName} {#qty}{qty} shrs @ ${price}{/qty}</span>
         </span>
         <span class="mid-col alt1">${marketValue}</span>
         <span class="mid-col alt2 /}">{?quote.price}{quote.price}{:else}N/A{/quote.price}</span>
@@ -12,7 +12,7 @@
     <div class="row small">
         <span class="mid-col alt1"></span>
         <span class="mid-col alt2 {@positive val=quote.change /}">{?quote.change}{quote.change}{:else}{/quote.change}</span>
-        <span class="change-val right-col alt2" data-action="toggleAlt">{gainPercent}%</span>
+        <span class="change-val right-col alt2 {@positive val=gainPercent /}" data-action="toggleAlt">{gainPercent}%</span>
         <span class="change-val right-col alt1 {@positive val=quote.percent-change /}" data-action="toggleAlt">{?quote.percent-change}{quote.percent-change}%{:else}{/quote.percent-change}</span>
     </div>
     {?hasLabel}

@@ -143,7 +143,8 @@
 			lot = Stock.Portfolios.lots.get(root.data().lot),
 			info = extractLotFormInfo(root, true),
 			port = info.port,
-			lotInfo = info.lot;
+			lotInfo = info.lot,
+			handled = false;
 		if (lot && info.result) {
 			for (field in lotInfo) {
 				if (lot.get(field) != lotInfo[field]) {
@@ -159,18 +160,20 @@
 					console.log("Edit lot failed");
 					// TODO: revert change
 				}});
+			handled = true;
 		}
 		else {
 			console.log("Invalid transaction info");
-			e.preventDefault();
 		}
+		return handled;
 	}
 
 	function handleAddTrans(e) {
 		var root = $("#AddTrans"),
 			info = extractLotFormInfo(root),
 			port = info.port,
-			lot = info.lot;
+			lot = info.lot,
+			handled = false;
 		if (info.result) {
 			if (info.transType == "buy") {
 				Stock.Portfolios.addLot(port, lot, function (err, lot) {
@@ -182,12 +185,13 @@
 						console.log("Add lot failed");
 					}
 				});
+				handled = true;
 			}
 		}
 		else {
 			console.log("Invalid transaction info");
-			e.preventDefault();
 		}
+		return handled;
 	}
 
 	function getAncestor(el, selector, stopAt)
@@ -339,10 +343,10 @@
 				}
 				break;
 			case "editLot":
-				handleEditTrans(e);
+				handled = handleEditTrans(e);
 				break;
 			case "addTrans":
-				handleAddTrans(e);
+				handled = handleAddTrans(e);
 				break;
 			case "toggleAlt":
 				var el = getAncestor(e.target, ".summary-list-container");
@@ -388,7 +392,8 @@
 					var cash = prompt("What's the cash balance for " + port.get("name") + "?");
 					if (cash)
 						cash = cash.replace(",", "");
-					if (cash >= 0) {
+					cash = parseFloat(cash);
+					if (cash != NaN) {
 						Stock.Portfolios.updateCash(port, cash);
 					}
 				}
@@ -407,13 +412,32 @@
 		$(document).on("tap", onClick);
 	}
 
+	function _sumTotalForLots(lotsList, context) {
+		context = context || {};
+		if (lotsList.length > 0) {
+			context.gain = 0;
+			context.marketValue = 0;
+			context.valueDelta = 0;
+
+			lotsList.forEach(function (lot) {
+				context.gain += lot.gain;
+				context.marketValue += lot.marketValue;
+				context.valueDelta += lot.valueDelta;
+			});
+			context.gainPercent = toFixed(context.gain * 100 / (context.marketValue - context.gain));
+			context.valueDeltaPercent = toFixed(context.valueDelta * 100 / (context.marketValue - context.valueDelta));
+		}
+		return context;
+	}
 	function renderViewStock(symbol, portId) {
 		if (symbol) {
 			var start = new Date(),
 				symbols = Stock.Portfolios.getAllRelatedSymbols(symbol),
 				lotsBySumbols = [];
 			symbols.forEach(function(symbol) {
-				lotsBySumbols.push(Stock.Portfolios.getAllLots({symbol: symbol, portId: portId }));
+				var symLot = Stock.Portfolios.getAllLots({symbol: symbol, portId: portId });
+				if (symLot.lots.length > 0)
+					lotsBySumbols.push(symLot);
 			});
 
 			var context = {
@@ -421,6 +445,7 @@
 				quote : Stock.QuoteManager.quotes[symbol],
 				headlines : Stock.QuoteManager.getNews(symbol)
 			};
+			_sumTotalForLots(lotsBySumbols, context);
 
 			renderPage("ViewStock", "ViewStock", context);
 
@@ -448,11 +473,13 @@
 		var start = new Date(),
 			showPortName = false;
 		var port = null,
-			//lots = Stock.Portfolios.getCombinedLots({ portId: portId, getSublots: true });
-			lots = Stock.Portfolios.getAllLots({ portId: portId });
+			singleLot = true,
+			lots = Stock.Portfolios.getCombinedLots({ portId: portId, getSublots: true });
+			//lots = Stock.Portfolios.getCombinedLots({  });//
+			//lots = Stock.Portfolios.getAllLots({ portId: portId });
 
 		if (portId == "all") {
-			showPortName = true;
+			showPortName = singleLot;
 			port = { objectId: "all", name: "All Portfolios", cash: Stock.Portfolios.getAllCash()};
 		}
 		else {
@@ -528,7 +555,7 @@
 	function getPortContext(portId) {
 		var context = null,
 			port = Stock.Portfolios.portfolios.get(portId),
-			lots = Stock.Portfolios.getPortLots(portId, true, true);
+			lotInfo = Stock.Portfolios.getPortLots(portId, true, true);
 		if (port) {
 			context = port.toJSON();
 		}
@@ -536,31 +563,12 @@
 			context = { cash: Stock.Portfolios.getAllCash() };
 
 		if (context) {
-			context.marketValue = 0;
-			context.valueDelta = 0;
-			context.gain = 0;
-			context.cost = 0;
-			lots.forEach(function (lot) {
-				if (!isNaN(lot.marketValue))
-					context.marketValue += lot.marketValue;
-				if (!isNaN(lot.cost))
-					context.cost += lot.cost;
-				if (!isNaN(lot.valueDelta))
-					context.valueDelta += lot.valueDelta;
-				if (!isNaN(lot.gain))
-					context.gain += lot.gain;
-			});
-			context.marketValue += context.cash;
-			context.valueDeltaPercent = context.valueDelta*100/context.marketValue;
-			context.gainPercent = context.gain*100/context.marketValue;
-
-			context.cost = context.cost.toFixed(2);
-			context.valueDelta = context.valueDelta.toFixed(0);
-			context.gain = context.gain.toFixed(0);
-			context.marketValue = context.marketValue.toFixed(0);
-			context.valueDeltaPercent = context.valueDeltaPercent.toFixed(2);
-			context.gainPercent = context.gainPercent.toFixed(2);
-
+			context.marketValue = toFixed(lotInfo.marketValue + context.cash, 0);
+			context.valueDelta = toFixed(lotInfo.valueDelta, 0);
+			context.gain = toFixed(lotInfo.gain, 0);
+			context.cost = toFixed(lotInfo.cost, 0);
+			context.valueDeltaPercent = toFixed(lotInfo.valueDeltaPercent);
+			context.gainPercent = toFixed(lotInfo.gainPercent);
 		}
 		return context;
 	}
@@ -594,34 +602,34 @@
 	}
 	function renderViewMarket() {
 		var context = { topNews: 1, header: "Top News" };
+		context.myStocks = Stock.Portfolios.getWatchList({ ignoreOptions: true });
 		var news = Stock.QuoteManager.getTopNews();
 		if (news.length > 0)
 			context.headlines = news;
+		context.myStocks.sort(function(a, b) {
+			if (a.symbol == b.symbol) {
+				return 0;
+			}
+			return a.symbol > b.symbol ? 1 : -1;
+		});
 		renderPage("Market", "ViewMarket", context);
 		return true;
 	}
 	function renderDashboard() {
 		var context = { };
-		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: true });
+		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: true }).lots;
 		context.earnings = Stock.QuoteManager.getEarnings();
 
-		context.myPorts = [];
-		var portContext = getPortContext("all");
-		if (portContext)
+		var portContext = Stock.Portfolios.getAllLots();
+		if (portContext) {
+			portContext.cash = Stock.Portfolios.getAllCash();
 			context.allPorts = portContext;
-		Stock.Portfolios.portfolios.forEach(function(port) {
-			portContext = getPortContext(port.id);
-			if (portContext)
-				context.myPorts.push(portContext);
-		});
+		}
+
 		context.myStocks.sort(function(a, b) {
-			return a.symbol > b.symbol ? 1 : (a.symbol == b.symbol ? 0 : -1);
-		});
-		context.myPorts.sort(function(a, b) {
-			if (a.marketValue || b.marketValue)
-				return b.marketValue - a.marketValue;
-			else
-				return a.name > b.name ? 1 : (a.name == b.name ? 0 : -1);
+			a = Math.abs(a.valueDelta) || 0;
+			b = Math.abs(b.valueDelta) || 0;
+			return b - a;
 		});
 		renderPage("Dashboard", "Dashboard", context);
 	}

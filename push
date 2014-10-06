@@ -1,0 +1,4 @@
+./deploy
+cd Scraper
+parse deploy
+cd ..

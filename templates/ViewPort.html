@@ -22,7 +22,7 @@
     {@if cond="{$idx} == 0"}
     {> CombinedLotItem  hasLabel=1 showPortName=showPortName /}
     {:else}
-    {> CombinedLotItem showPortName=1 /}
+    {> CombinedLotItem showPortName=showPortName /}
     {/if}
     {/lots}
     {/lotsInfo}
