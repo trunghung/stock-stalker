@@ -343,10 +343,10 @@
 				}
 				break;
 			case "editLot":
-				handled = handleEditTrans(e);
+				handled = !handleEditTrans(e);
 				break;
 			case "addTrans":
-				handled = handleAddTrans(e);
+				handled = !handleAddTrans(e);
 				break;
 			case "toggleAlt":
 				var el = getAncestor(e.target, ".summary-list-container");
@@ -368,6 +368,7 @@
 				break;
 			case "AddPort":
 				onAddPortSubmit(e);
+				handled = false;
 				break;
 			case "refresh":
 				Stock.Portfolios.update();
