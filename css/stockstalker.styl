@@ -4,6 +4,9 @@ body * {
 }
 .ui-page {
 	-webkit-user-select: none;
+	.symbol {
+		-webkit-user-select: initial;
+	}
 }
 .ui-page .ui-content {
 	padding: 5px;
@@ -392,5 +395,19 @@ table.draw-border {
 	}
 	&.show-alt .alt1{
 		display: none;
+	}
+}
+#ImportLotsTool {
+  	.import-json {
+	  max-height: 150px;
+	}
+	.matched {
+	  	padding-bottom : 20px;
+	  	.matched-port {
+			font-weight : bold;
+	  	}
+	  	.matched-port {
+			padding: 15px 0;
+	  	}
 	}
 }

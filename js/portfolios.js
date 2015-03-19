@@ -132,7 +132,7 @@
 		}
 	}
 	
-	function addLot(port, lot, callback) {
+	function addLot(port, lot, callback, doNotUpdateCash) {
 		var currentUser = Parse.User.current();
 		if (currentUser && lot.symbol) {
 			var newLot = new Lot();
@@ -149,7 +149,8 @@
 				success: function(obj) {
 					log("addLot succeeded " + obj.get("symbol"));
 					_lots.add(obj);
-					updateCash(port, port.get("cash") - (lot.qty * lot.price + lot.fee));
+					if (!doNotUpdateCash)
+						updateCash(port, port.get("cash") - (lot.qty * lot.price + lot.fee));
 					callback && callback(0, obj);
 				},
 				error: function(model, error) {
@@ -522,6 +523,35 @@
 		});
 		return cash;
 	}
+	function getPortByName(name) {
+		for (var i=0; i < portfolios.length; i++) {
+			if (portfolios.at(i).get("name") == name) {
+				return portfolios.at(i);
+			}
+		}
+		return null;
+	}
+	function removeAllPortLot(port, callback) {
+		var lots = _lots.filter(function(lot) {
+			return (lot.attributes.portId == port.id);
+		});
+		if (lots.length > 0) {
+			removeLot(lots[0], function (err, lot) {
+				if (!err) {
+					setTimeout(function() {
+						removeAllPortLot(port, callback);
+					}, 0);
+				}
+				else {
+					console.log("Remove all lots failed");
+					callback && callback("delete failed");
+				}
+			});
+		}
+		else {
+			callback && callback(0, "done");
+		}
+	}
 
 	
 	Stock.Portfolios = {
@@ -539,11 +569,14 @@
 		updateCash: updateCash,
 		addLot: addLot,
 		sellLot: sellLot,
+		removeLot: removeLot,
+		removeAllPortLot: removeAllPortLot,
 		update: update,
 		getStocksList: getStockList,
 		getCombinedLots: getCombinedLots,
 		getLotsGroupedByPort: getLotsGroupedByPort,
 		getAllLots: getAllLots,
+		getPortByName: getPortByName,
 		getAllRelatedSymbols: getAllRelatedSymbols,
 		getWatchList: getWatchList
 	};

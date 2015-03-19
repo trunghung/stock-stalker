@@ -95,7 +95,7 @@
 		return ret;
 	}
 	function onAddPortSubmit(e) {
-		var name = $("#AddPort .name").val();
+		var name = e.target.dataset.name ? e.target.dataset.name : $("#AddPort .name").val();
 		if (name.length > 0) {
 			console.log("Create new Port: " + name);
 			Stock.Portfolios.createPort(name, function(err, port) {
@@ -293,6 +293,19 @@
 					$.mobile.navigate("#ViewStock");
 				}
 				break;
+			case "viewImportTool":
+				var context = Stock.Import.getData();
+				context.header = "Import Transactions";
+				renderPage("ImportLotsTool", "ImportLotsTool", context);
+				$.mobile.navigate("#ImportLotsTool");
+				break;
+			case "import-preview":
+				var input = document.querySelector(".import-json").value,
+					context = Stock.Import.parseData(input);
+				context.header = "Import Transactions";
+				context.data = input;
+				renderPage("ImportLotsTool", "ImportLotsTool", context);
+				break;
 			case "viewNewsArticle":
 				$.mobile.loading( "show" );
 				var item = Stock.QuoteManager.getNewsItem(info.el.dataset.link, info.el.dataset.topnews == 1);
@@ -369,6 +382,9 @@
 			case "AddPort":
 				onAddPortSubmit(e);
 				handled = false;
+				break;
+			case "import":
+				Stock.Import.importLots();
 				break;
 			case "refresh":
 				Stock.Portfolios.update();
