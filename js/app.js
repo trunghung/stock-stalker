@@ -43,19 +43,13 @@
 		bindUI();
 
 		// Set a max-height to make large images shrink to fit the screen.
-		$( document ).on( "pagebeforeshow", function() {
+		$( document ).on( "pagebeforeshow", function(event, info) {
 			$('.ui-header').trigger('resize');
 		});
-		$.mobile.document.on( "pagebeforechange", function( event, data ) {
-			return;
-			if (data.absUrl === undefined) {
-				$.mobile.changePage("#Dashboard");
-				event.preventDefault();
-				console.log("pagebeforechange: Go to Dashboard")
-			}
-			console.log("pagebeforechange: " + data.absUrl);
-			console.log(data.toPage);
+		$( document ).on( "pagechange", function(event, info) {
+			render();
 		});
+
 		// Remove the popup after it has been closed to manage DOM size
 		$( document ).on( "popupafterclose", ".ui-popup", function(e) {
 			setTimeout(function() {
@@ -518,6 +512,8 @@
 					return a.symbol > b.symbol ? 1 : -1;
 			});
 
+			// Include cash in the port market value
+			context.lotsInfo.marketValue += context.port.cash;
 			renderPage("ViewPort", "ViewPort", context);
 
 			var page = document.querySelector("#ViewPort");
@@ -634,12 +630,14 @@
 	}
 	function renderDashboard() {
 		var context = { };
-		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: true }).lots;
+		context.myStocks = Stock.Portfolios.getCombinedLots({ ignoreOptions: false }).lots;
 		context.earnings = Stock.QuoteManager.getEarnings();
+		context.indices = ["^GSPC", "^DJI", "^IXIC"];
 
 		var portContext = Stock.Portfolios.getAllLots();
 		if (portContext) {
 			portContext.cash = Stock.Portfolios.getAllCash();
+			portContext.marketValue += portContext.cash;	// Include cash in the portfolio market value
 			context.allPorts = portContext;
 		}
 
@@ -674,7 +672,6 @@
 				break;
 		}
 	}
-	//var _lots = [{"symbol":"EXXI","qty":92,"fee":9.99,"note":"","price":30.96,"type":0,"transDate":{"__type":"Date","iso":"2013-10-14T07:00:00.000Z"},"portId":"db36lnpeAT","parent":{"__type":"Pointer","className":"Portfolio","objectId":"db36lnpeAT"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"0N9YZf6Nr7","createdAt":"2014-07-11T06:32:14.965Z","updatedAt":"2014-07-11T06:32:14.965Z"},{"symbol":"FB","qty":100,"fee":9.99,"note":"","price":68.756,"type":0,"transDate":{"__type":"Date","iso":"2014-03-13T07:00:00.000Z"},"portId":"db36lnpeAT","parent":{"__type":"Pointer","className":"Portfolio","objectId":"db36lnpeAT"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"16uquM93L7","createdAt":"2014-07-11T06:32:14.975Z","updatedAt":"2014-07-11T06:32:14.975Z"},{"symbol":"YHOO150117C00035000","qty":500,"fee":9.99,"note":"","price":8.8,"type":0,"transDate":{"__type":"Date","iso":"2013-12-26T08:00:00.000Z"},"portId":"db36lnpeAT","parent":{"__type":"Pointer","className":"Portfolio","objectId":"db36lnpeAT"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"AiGcxmEDBS","createdAt":"2014-07-11T06:32:15.110Z","updatedAt":"2014-07-11T06:32:15.110Z"},{"symbol":"FCNTX","qty":104,"fee":9.99,"note":"","price":97,"type":0,"transDate":{"__type":"Date","iso":"2014-03-05T08:00:00.000Z"},"portId":"2MW95axkza","parent":{"__type":"Pointer","className":"Portfolio","objectId":"2MW95axkza"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"fEAMaP7FFP","createdAt":"2014-07-11T06:34:44.129Z","updatedAt":"2014-07-11T06:34:44.129Z"},{"symbol":"FCNTX","qty":652,"fee":10,"note":"","price":96.78,"type":0,"transDate":{"__type":"Date","iso":"2014-02-24T08:00:00.000Z"},"portId":"2MW95axkza","parent":{"__type":"Pointer","className":"Portfolio","objectId":"2MW95axkza"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"e2cBoWDpKk","createdAt":"2014-07-11T06:34:44.132Z","updatedAt":"2014-07-11T06:34:44.132Z"},{"symbol":"FCNTX","qty":3,"fee":0,"note":"","price":97.88,"type":0,"transDate":{"__type":"Date","iso":"2014-03-18T07:00:00.000Z"},"portId":"2MW95axkza","parent":{"__type":"Pointer","className":"Portfolio","objectId":"2MW95axkza"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"s1Uv2HjCHD","createdAt":"2014-07-11T06:34:44.308Z","updatedAt":"2014-07-11T06:34:44.308Z"},{"symbol":"VBTIX","qty":8110,"fee":9.99,"note":"","price":10.7,"type":0,"transDate":{"__type":"Date","iso":"2014-03-05T08:00:00.000Z"},"portId":"2MW95axkza","parent":{"__type":"Pointer","className":"Portfolio","objectId":"2MW95axkza"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"yc8U2r3rmN","createdAt":"2014-07-11T06:34:44.310Z","updatedAt":"2014-07-11T06:34:44.310Z"},{"symbol":"VBTIX","qty":227,"fee":9.99,"note":"","price":10.7,"type":0,"transDate":{"__type":"Date","iso":"2014-03-18T07:00:00.000Z"},"portId":"2MW95axkza","parent":{"__type":"Pointer","className":"Portfolio","objectId":"2MW95axkza"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"IlTg3ydyjp","createdAt":"2014-07-11T06:34:44.328Z","updatedAt":"2014-07-11T06:34:44.328Z"},{"symbol":"EXXI","qty":92,"fee":9.99,"note":"","price":30.96,"type":0,"transDate":{"__type":"Date","iso":"2013-10-14T07:00:00.000Z"},"portId":"SEilhNegwH","parent":{"__type":"Pointer","className":"Portfolio","objectId":"SEilhNegwH"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"R3sPcUWFjM","createdAt":"2014-07-11T06:35:55.275Z","updatedAt":"2014-07-11T06:35:55.275Z"},{"symbol":"FB","qty":100,"fee":9.99,"note":"","price":68.836,"type":0,"transDate":{"__type":"Date","iso":"2014-03-13T07:00:00.000Z"},"portId":"SEilhNegwH","parent":{"__type":"Pointer","className":"Portfolio","objectId":"SEilhNegwH"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"LqaSTViTCZ","createdAt":"2014-07-11T06:35:55.413Z","updatedAt":"2014-07-11T06:35:55.413Z"},{"symbol":"YHOO150117C00035000","qty":500,"fee":9.99,"note":"","price":8.8,"type":0,"transDate":{"__type":"Date","iso":"2013-12-26T08:00:00.000Z"},"portId":"SEilhNegwH","parent":{"__type":"Pointer","className":"Portfolio","objectId":"SEilhNegwH"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"ff5z9c2mIg","createdAt":"2014-07-11T06:35:55.465Z","updatedAt":"2014-07-11T06:35:55.465Z"},{"symbol":"LULU150117C00060000","qty":1000,"fee":18,"note":"","price":9.8,"type":0,"transDate":{"__type":"Date","iso":"2013-12-12T08:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"kVECEfKMZZ","createdAt":"2014-07-11T06:36:09.695Z","updatedAt":"2014-07-11T06:36:09.695Z"},{"symbol":"FB150117C00067500","qty":500,"fee":9.99,"note":"","price":12.45,"type":0,"transDate":{"__type":"Date","iso":"2014-03-13T07:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"JEK9nifuNp","createdAt":"2014-07-11T06:36:09.695Z","updatedAt":"2014-07-11T06:36:09.695Z"},{"symbol":"YHOO150117C00037000","qty":200,"fee":25,"note":"","price":6.25,"type":0,"transDate":{"__type":"Date","iso":"2014-02-13T08:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"8HXiZyXHXv","createdAt":"2014-07-11T06:36:09.825Z","updatedAt":"2014-07-11T06:36:09.825Z"},{"symbol":"YHOO150117C00037000","qty":2000,"fee":9.99,"note":"","price":6.25,"type":0,"transDate":{"__type":"Date","iso":"2014-02-13T08:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"wPxMzUYk4c","createdAt":"2014-07-11T06:36:09.848Z","updatedAt":"2014-07-11T06:36:09.848Z"},{"symbol":"YHOO140719C00040000","qty":2000,"fee":9.99,"note":"","price":3.05,"type":0,"transDate":{"__type":"Date","iso":"2014-02-13T08:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"P7i0FFOWQT","createdAt":"2014-07-11T06:36:09.906Z","updatedAt":"2014-07-11T06:36:09.906Z"},{"symbol":"YHOO150117C00037000","qty":1000,"fee":9.99,"note":"","price":5.75,"type":0,"transDate":{"__type":"Date","iso":"2014-03-10T07:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"WFRLakRrkx","createdAt":"2014-07-11T06:36:09.963Z","updatedAt":"2014-07-11T06:36:09.963Z"},{"symbol":"YHOO150117C00037000","qty":1000,"fee":9.99,"note":"","price":5.2,"type":0,"transDate":{"__type":"Date","iso":"2014-03-13T07:00:00.000Z"},"portId":"f8KnQ6MduF","parent":{"__type":"Pointer","className":"Portfolio","objectId":"f8KnQ6MduF"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"Vaimmg6qeH","createdAt":"2014-07-11T06:36:09.991Z","updatedAt":"2014-07-11T06:36:09.991Z"},{"symbol":"YHOO","qty":183,"fee":0,"note":"","price":29.808,"type":0,"transDate":{"__type":"Date","iso":"2014-02-10T08:00:00.000Z"},"portId":"Ggea5NdHD9","parent":{"__type":"Pointer","className":"Portfolio","objectId":"Ggea5NdHD9"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"KSChLQ9JBR","createdAt":"2014-07-11T06:36:41.094Z","updatedAt":"2014-07-11T06:36:41.094Z"},{"symbol":"YHOO","qty":3348,"fee":0,"note":"","price":40.01,"type":0,"transDate":{"__type":"Date","iso":"2014-01-24T08:00:00.000Z"},"portId":"Ggea5NdHD9","parent":{"__type":"Pointer","className":"Portfolio","objectId":"Ggea5NdHD9"},"ACL":{"zFhwETr67B":{"read":true,"write":true}},"objectId":"bn3Mrw9ev7","createdAt":"2014-07-11T06:36:41.099Z","updatedAt":"2014-07-11T06:36:41.099Z"}];
 	Stock.App = {
 		init: init
 	};

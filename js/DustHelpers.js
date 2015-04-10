@@ -31,7 +31,7 @@
 		if (params.type == "quote") {
 			var symbol = params.symbol || context.get("symbol"),
 				quote = Stock.QuoteManager.quotes[symbol];
-			return chunk.write(quote ? (quote.change >= 0 ? "positive" : "negative") : "");
+			return chunk.write(quote != undefined ? (quote.change >= 0 ? "positive" : "negative") : "hidden");
 		}
 		else if (params.type == "port") {
 

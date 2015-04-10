@@ -238,9 +238,6 @@ table.draw-border {
 
 }
 
-.earnings {
-	padding: 10px 0;
-}
 .xx-large-title {
 	font-size: xx-large;
 	padding: 10px 0;
@@ -284,9 +281,11 @@ table.draw-border {
 .my_stocks {
 	position: relative;
 }
+.section {
+	padding: 10px 0;
+}
 
 .my_portfolios {
-	padding: 5px;
 	.heading {
 		font-size: x-large;
 		padding: 0 0 15px 0;
@@ -410,4 +409,21 @@ table.draw-border {
 			padding: 15px 0;
 	  	}
 	}
+}
+
+.stock-quote-block {
+	display: inline-block;
+	width: 25%;
+	label {
+		display: block;
+		font-weight: bold;
+		margin: 0;
+	}
+	.price, .change {
+		display: block;
+	}
+}
+
+.hidden {
+	display: none !important;
 }

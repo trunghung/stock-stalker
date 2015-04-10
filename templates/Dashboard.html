@@ -1,26 +1,35 @@
-<div class="my_portfolios">
+<div class="my_portfolios section">
     {#allPorts}
     <div class="x-large-title">{@formatField field="marketValue" longVal="true" /}</div>
     <div>Day's Change: <span class="change {@positive val=valueDelta /}">{@formatField field="valueDelta" longVal=1 /} ({valueDeltaPercent}%)</span></div>
     <div>Total Gain: <span class="change {@positive val=gain /}">{@formatField field="gain" /} ({gainPercent}%)</span></div>
     <div>Cash balance: <span class="{@positive val=cash /}">{cash}</span></div>
     {/allPorts}
-
 </div>
 
-<div class="earnings" {^earnings}hidden{/earnings}>
+<div class="indices section">
+    {#indices}
+    <div class="stock-quote-block" data-symbol="{.}" data-action="viewStock">
+        <label>{@quoteField symbol=. field="name" /}</label>
+        <span class="price">{@quoteField symbol=. field="price" /}</span>
+        <span class='change {@changeClass type="quote" symbol=. /}'>{@quoteField symbol=. field="change" /} ({@quoteField symbol=. field="percent-change" /})</span>
+    </div>
+    {/indices}
+</div>
+
+<div class="earnings section" {^earnings}hidden{/earnings}>
     <div class="x-large-title">Upcoming Earnings</div>
     <div>
         {#earnings}
-        <div>{symbol} - <span class="date">{@formatEarningDate dateStr="earningsDate" dateObj="earningsDateObj" /}</span></div>
+        <div data-action="viewStock" data-symbol="{symbol}">{symbol} - <span class="date">{@formatEarningDate dateStr="earningsDate" dateObj="earningsDateObj" /}</span></div>
         {/earnings}
     </div>
 </div>
 
-<div class="my_stocks summary-list-container">
+<div class="my_stocks summary-list-container section">
     <div class="top-mover">Top Movers</div>
     {#myStocks}
-    {@lt key=$idx value=6}
+    {@lt key=$idx value=15}
         {@if cond="{$idx} == 0"}
         {> LotDayAndQuote  hasLabel=1 /}
         {:else}

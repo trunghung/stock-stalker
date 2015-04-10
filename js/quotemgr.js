@@ -64,8 +64,17 @@
 				localStorage.setItem("earnings", JSON.stringify(_earnings));
 			}
 		}
+		// Overwrite the indices name
+		_overwriteQuoteName("^GSPC", "S&P 500");
+		_overwriteQuoteName("^DJI", "Dow");
+		_overwriteQuoteName("^IXIC", "Nasdad");
 		quoteMgr.trigger("quotesUpdated", quotes);
 	};
+	function _overwriteQuoteName(sym, name) {
+		if (_quotesInfo[sym]) {
+			_quotesInfo[sym].name = name;
+		}
+	}
 	
 	function onQueryResult(quotes) {
 		console.log("QuoteMgr: onQueryResult");
@@ -88,7 +97,10 @@
 	}
 	function downloadQuotes () {
 		var info = Stock.Portfolios.getStocksList();
-		
+
+		info.stocks.push("^GSPC");
+		info.stocks.push("^DJI");
+		info.stocks.push("^IXIC");
 		if (info.options.length > 0 || info.stocks.length > 0) {
 			var downloaded = 1;
 			Stock.Downloader.setCallback(function(quotes) {
